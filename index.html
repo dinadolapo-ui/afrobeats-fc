@@ -537,6 +537,1727 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
 .fb-team span { white-space: normal; overflow-wrap: anywhere; line-height: 1.2; }
 @media (max-width: 420px) { .fb-row { grid-template-columns: 38px 1fr 52px 1fr; gap: 6px; padding: 9px 8px; } .fb-team { font-size: 13px; gap: 6px; } .fb-crest { width: 18px; height: 18px; } }
 
+/* awards: countdown, organiser cards */
+.vote-clock { display: inline-flex; align-items: center; gap: 8px; margin: 0 0 14px; padding: 8px 14px; border-radius: 14px; line-height: 1.35; font-weight: 700; font-size: .92rem;
+  color: var(--gold, #f2c14e); background: rgba(242,193,78,.1); border: 1px solid rgba(242,193,78,.3); }
+.vote-clock.live::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: #2fd07a; box-shadow: 0 0 0 4px rgba(47,208,122,.18); }
+.private-card { border-color: rgba(255,155,143,.45); background: linear-gradient(135deg, rgba(217,75,63,.16), rgba(18,34,26,.72)); margin-bottom: 16px; }
+.private-card h2 { color: #ffb4aa; }
+.turnout-card { margin-bottom: 16px; }
+#awardsBox > .card + .card { margin-top: 14px; }
+
+</style>
+</head>
+<body>
+<div class="glow" aria-hidden="true"></div>
+
+<!-- ================= SIGN IN ================= -->
+<section id="gate" class="screen" aria-labelledby="gateTitle">
+  <div class="gate">
+    <div class="gate-hero">
+      <img class="gate-crest crest-img" alt="Afrobeats FC crest" width="170" height="252">
+      <p class="eyebrow">Afrobeats FC · UK</p>
+      <h1 id="gateTitle">The club, <span>in your pocket</span></h1>
+      <p class="lede">Sign up for matchday, see your team, check the leaderboards and vote in the 2026 awards.</p>
+      <div class="award-pills" aria-label="What's inside">
+        <span>Matchday sign-up</span><span>Random teams</span><span>Results &amp; stats</span><span>Man of the Match</span><span>Awards 2026</span><span>Fixtures</span>
+      </div>
+      <a class="btn btn-ghost winners-link" href="#winners" id="winnersLinkGate" hidden>See the 2026 award winners</a>
+    </div>
+    <form class="gate-card" id="gateForm" novalidate>
+      <div class="stripe" aria-hidden="true"></div>
+      <h2>Sign in</h2>
+      <div id="setupNotice" class="notice" hidden>Test mode: no Google Sheet connected. Paste your Apps Script URL into <code>SCRIPT_URL</code>.</div>
+      <div class="field" id="fieldPhone">
+        <label for="voterPhone">Your phone number <span class="hint">· the one in the WhatsApp group</span></label>
+        <input class="input" type="tel" id="voterPhone" autocomplete="tel" inputmode="tel" placeholder="07123 456789">
+      </div>
+      <p class="msg" id="gateMsg" role="alert"></p>
+      <button class="btn btn-gold btn-wide" type="submit" id="enterBtn">Sign in
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M5 12h14M13 6l6 6-6 6"/></svg>
+      </button>
+      <p class="privacy">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>
+        Only club members can sign in. Your number is checked against the members list and never shown to anyone else.
+      </p>
+    </form>
+  </div>
+</section>
+
+<!-- ================= JOIN (from the QR code) ================= -->
+<section id="joinScreen" class="screen" aria-labelledby="joinTitle">
+  <div class="gate">
+    <div class="gate-hero">
+      <img class="gate-crest crest-img" alt="Afrobeats FC crest" width="170" height="252">
+      <p class="eyebrow">Afrobeats FC · UK</p>
+      <h1 id="joinTitle">Join <span>the club</span></h1>
+      <p class="lede">Add your name and number. Once an organiser approves you, sign in with the same number to use the club app.</p>
+    </div>
+    <form class="gate-card" id="joinForm" novalidate>
+      <div class="stripe" aria-hidden="true"></div>
+      <div id="joinFields" class="form-grid">
+        <h2>Request to join</h2>
+        <div class="field"><label for="joinName">Your name</label><input class="input" id="joinName" autocomplete="name" maxlength="60" placeholder="First and last name"></div>
+        <div class="field"><label for="joinPhone">Phone number <span class="hint">· the one you use on WhatsApp</span></label><input class="input" type="tel" id="joinPhone" autocomplete="tel" inputmode="tel" placeholder="07123 456789"></div>
+        <p class="msg" id="joinMsg" role="alert"></p>
+        <button class="btn btn-gold btn-wide" type="submit" id="joinBtn">Send my request</button>
+        <p class="privacy"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><rect x="4" y="11" width="16" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>Only the club organisers see your number.</p>
+      </div>
+      <div id="joinDone" class="form-grid" hidden>
+        <h2 id="joinDoneTitle">Request sent</h2>
+        <p id="joinDoneText">Thanks! An organiser will approve you shortly. Then sign in with your number.</p>
+        <a class="btn btn-ghost" href="#">Go to sign in</a>
+      </div>
+    </form>
+  </div>
+</section>
+
+<!-- ================= PUBLIC WINNERS (no sign-in needed) ================= -->
+<section id="publicWinners" class="screen public-winners" aria-labelledby="winnersTitle">
+  <div class="wn">
+    <header class="wn-head">
+      <img class="crest-img" alt="Afrobeats FC crest" width="96" height="142">
+      <p class="eyebrow">Afrobeats FC · Awards 2026</p>
+      <h1 id="winnersTitle">And the winners <span>are…</span></h1>
+      <p id="winnersSub">Congratulations to every winner, and thank you to everyone who voted.</p>
+    </header>
+    <div class="wn-grid" id="publicWinnersGrid"></div>
+    <div class="wn-actions"><a class="btn btn-ghost" href="#" id="winnersBack">Open the club app</a></div>
+  </div>
+</section>
+
+<!-- ================= APP ================= -->
+<div class="app" id="app">
+  <header class="topbar">
+    <div class="topbar-row">
+      <img class="crest-img" alt="" width="46" height="68">
+      <div class="brand"><strong>Afrobeats FC</strong><small id="whoami"></small></div>
+      <span class="org-badge" id="orgBadge" hidden>Organiser</span>
+      <button class="btn btn-ghost btn-sm topbar-out" type="button" id="signOutTop">Sign out</button>
+    </div>
+    <nav class="tabs" id="tabs" aria-label="Sections">
+      <a href="#matchday" data-tab="matchday"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="5" width="18" height="16" rx="2"/><path d="M3 10h18M8 3v4M16 3v4"/></svg>Matchday</a>
+      <a href="#teams" data-tab="teams"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 4l-4 3 2 4 2-1v10h10V10l2 1 2-4-4-3h-3a2 2 0 0 1-4 0z"/></svg>Teams</a>
+      <a href="#season" data-tab="season"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Season</a>
+      <a href="#awards" data-tab="awards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Awards</a>
+      <a href="#football" data-tab="football"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z"/><path d="M12 3v4M16 10l4.5-1.5M14.5 15l2.5 4M9.5 15L7 19M8 10L3.5 8.5"/></svg>Football</a>
+      <a href="#club" data-tab="club"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 11l16-7v16L4 13z"/><path d="M8 13v6"/></svg>Club</a>
+      <a href="#me" data-tab="me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>My details</a>
+      <a href="#players" data-tab="players" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></svg>Players</a>
+    </nav>
+  </header>
+
+  <main class="content">
+    <div id="hello" class="hello"></div>
+    <!-- MATCHDAY -->
+    <section class="view" id="v-matchday" aria-labelledby="h-matchday">
+      <header class="view-head"><p class="eyebrow">Matchday</p><h1 id="h-matchday">Next game</h1></header>
+      <div id="mdGame"></div>
+      <div class="grid2">
+        <div class="card"><h2>Playing <span class="count" id="mdCount"></span></h2><div id="mdPlayers"></div></div>
+        <div class="card"><h2>Waiting list <span class="count" id="mdWaitCount"></span></h2><div id="mdWaiting"></div>
+          <p class="muted-note">If someone drops out, the first person on the waiting list moves up automatically.</p></div>
+      </div>
+      <div class="grid2 org-only" hidden>
+        <form class="card" id="guestForm" novalidate>
+          <h2>Add a guest</h2>
+          <p class="muted-note">For players who aren't in the members list.</p>
+          <div class="row"><input class="input" id="guestName" placeholder="Guest's name" maxlength="40" aria-label="Guest's name"><button class="btn btn-gold btn-sm" type="submit">Add</button></div>
+        </form>
+        <form class="card" id="gameForm" novalidate>
+          <h2>Set up the next game</h2>
+          <p class="muted-note">Starts a fresh sign-up list. Past results and stats are kept.</p>
+          <div class="form-grid two">
+            <div class="field"><label for="gDate">Date</label><input class="input" type="date" id="gDate"></div>
+            <div class="field"><label for="gTime">Kick-off</label><input class="input" type="time" id="gTime"></div>
+            <div class="field"><label for="gVenue">Venue</label><input class="input" id="gVenue" placeholder="Botanic Park" maxlength="80"></div>
+            <div class="field"><label for="gFee">Fee</label><input class="input" id="gFee" placeholder="£5" maxlength="20"></div>
+            <div class="field"><label for="gCap">Spots</label><input class="input" type="number" id="gCap" min="2" max="60" value="36"></div>
+          </div>
+          <button class="btn btn-gold" type="submit">Save and open sign-ups</button>
+        </form>
+      </div>
+    </section>
+
+    <!-- TEAMS -->
+    <section class="view" id="v-teams" aria-labelledby="h-teams">
+      <header class="view-head"><p class="eyebrow">Matchday</p><h1 id="h-teams">Teams</h1><p id="teamsSub">Picked at random from the playing list, balanced by position.</p></header>
+      <div class="card org-only" hidden>
+        <h2>Organiser</h2>
+        <div class="row">
+          <button class="btn btn-gold btn-sm" type="button" data-act="pickTeams" id="pickBtn">Pick random teams</button>
+          <button class="btn btn-ghost btn-sm" type="button" data-act="clearTeams">Clear teams</button>
+        </div>
+        <p class="muted-note">Players who should never be on the same side: list them in the <b>KeepApart</b> tab of the Google Sheet. Positions come from each player's "My details".</p>
+      </div>
+      <div id="teamsBox"></div>
+    </section>
+
+    <!-- SEASON -->
+    <section class="view" id="v-season" aria-labelledby="h-season">
+      <header class="view-head"><p class="eyebrow">Season 2026</p><h1 id="h-season">Results &amp; stats</h1></header>
+      <div id="motmBox"></div>
+      <div class="grid2">
+        <div class="card"><h2>Leaderboard</h2>
+          <div class="board-tabs" role="tablist" id="boardTabs">
+            <button type="button" class="on" data-board="goals">Goals</button>
+            <button type="button" data-board="assists">Assists</button>
+            <button type="button" data-board="apps">Appearances</button>
+          </div>
+          <div id="boardBox"></div>
+        </div>
+        <div class="card"><h2>Results <span class="count" id="resCount"></span></h2><div id="resultsBox"></div></div>
+      </div>
+      <form class="card org-only" id="resultForm" hidden novalidate>
+        <h2>Record a result</h2>
+        <div class="form-grid two">
+          <div class="field"><label for="rDate">Game date</label><input class="input" type="date" id="rDate"></div>
+          <div class="row" style="align-items:end">
+            <div class="field" style="flex:1"><label for="rOrange"><span class="dot-o"></span> Orange</label><input class="input" type="number" min="0" id="rOrange" value="0"></div>
+            <div class="field" style="flex:1"><label for="rBlue"><span class="dot-b"></span> Blue</label><input class="input" type="number" min="0" id="rBlue" value="0"></div>
+          </div>
+        </div>
+        <div class="scorer-head"><span>Player</span><span>Goals</span><span>Assists</span><span></span></div>
+        <div id="scorerRows" class="form-grid"></div>
+        <div class="row"><button class="btn btn-ghost btn-sm" type="button" id="addScorer">Add a player</button></div>
+        <p class="muted-note">Recording the same date again replaces that game's result. Saving opens Man of the Match voting for the game.</p>
+        <button class="btn btn-gold" type="submit">Save result</button>
+      </form>
+    </section>
+
+    <!-- AWARDS -->
+    <section class="view" id="v-awards" aria-labelledby="h-awards">
+      <header class="view-head"><p class="eyebrow">Awards 2026</p><h1 id="h-awards">End of season awards</h1><p id="awardsSub"></p></header>
+      <div id="awardsBox"></div>
+      <div class="ballot" id="ballotWrap" hidden>
+        <form id="form" class="ballot" novalidate></form>
+        <div class="ballot-submit"><p class="msg" id="msg" role="alert"></p><button class="btn btn-gold btn-wide" type="button" id="dockReview">Review my ballot</button></div>
+      </div>
+      <div class="wn-grid" id="winnersGrid"></div>
+    </section>
+
+    <!-- FOOTBALL -->
+    <section class="view" id="v-football" aria-labelledby="h-football">
+      <header class="view-head"><p class="eyebrow">Around the world</p><h1 id="h-football">Football scores</h1>
+        <p>Premier League, Champions League and Europe's top leagues. Scores update every few minutes.</p></header>
+      <div class="fb-days" id="fbDays" role="tablist" aria-label="Day"></div>
+      <div class="fb-comps" id="fbComps" aria-label="Competition"></div>
+      <div id="fbBox"><p class="loading">Loading scores…</p></div>
+      <div class="card"><h2>League table
+        <select class="input fb-table-pick" id="fbTablePick" aria-label="League table">
+          <option value="PL">Premier League</option><option value="PD">La Liga</option><option value="SA">Serie A</option><option value="BL1">Bundesliga</option><option value="FL1">Ligue 1</option><option value="ELC">Championship</option><option value="DED">Eredivisie</option><option value="PPL">Primeira Liga</option><option value="BSA">Brasileirão</option>
+        </select></h2>
+        <div id="fbTable"><p class="empty">Choose a league to see its table.</p></div>
+      </div>
+      <p class="muted-note">Data from football-data.org. Free data can run a few minutes behind live.</p>
+    </section>
+
+    <!-- CLUB -->
+    <section class="view" id="v-club" aria-labelledby="h-club">
+      <header class="view-head"><p class="eyebrow">Club</p><h1 id="h-club">Notices &amp; fixtures</h1></header>
+      <div id="noticeBox"></div>
+      <form class="card org-only" id="noticeForm" hidden novalidate>
+        <h2>Pinned notice</h2>
+        <textarea class="input" id="noticeText" maxlength="600" aria-label="Pinned notice" placeholder="e.g. Bring both bibs on Saturday."></textarea>
+        <div class="row"><button class="btn btn-gold btn-sm" type="submit">Save notice</button><span class="muted-note">Leave empty to remove it.</span></div>
+      </form>
+      <div class="card"><h2>Upcoming fixtures</h2><div id="fixturesBox"></div></div>
+      <form class="card org-only" id="fixtureForm" hidden novalidate>
+        <h2>Add a fixture</h2>
+        <div class="form-grid two">
+          <div class="field"><label for="fTitle">What</label><input class="input" id="fTitle" placeholder="vs Lagos Lions" maxlength="80"></div>
+          <div class="field"><label for="fVenue">Where</label><input class="input" id="fVenue" placeholder="Hackney Marshes" maxlength="80"></div>
+          <div class="field"><label for="fDate">Date</label><input class="input" type="date" id="fDate"></div>
+          <div class="field"><label for="fTime">Time</label><input class="input" type="time" id="fTime"></div>
+        </div>
+        <button class="btn btn-gold" type="submit">Add fixture</button>
+      </form>
+    </section>
+
+    <!-- MY DETAILS -->
+    <section class="view" id="v-me" aria-labelledby="h-me">
+      <header class="view-head"><p class="eyebrow">You</p><h1 id="h-me">My details</h1>
+        <p>Only you and the club organisers can see these. Your nickname shows on team sheets; your position helps balance the teams.</p></header>
+      <form class="card" id="meForm" novalidate>
+        <div class="form-grid two">
+          <div class="field"><label for="meNick">Nickname <span class="hint">· shown on team sheets</span></label><input class="input" id="meNick" maxlength="30"></div>
+          <div class="field"><label for="mePos">Usual position</label>
+            <select class="input" id="mePos"><option value="">Not set</option><option value="GK">Goalkeeper</option><option value="DEF">Defender</option><option value="MID">Midfielder</option><option value="ATT">Attacker</option></select></div>
+          <div class="field"><label for="meFull">Full name</label><input class="input" id="meFull" maxlength="80" autocomplete="name"></div>
+          <div class="field"><label for="meDob">Date of birth <span class="hint">· DD/MM/YYYY</span></label><input class="input" id="meDob" inputmode="numeric" placeholder="04/05/1990" maxlength="10"></div>
+        </div>
+        <h2>Emergency contact</h2>
+        <div class="form-grid two">
+          <div class="field"><label for="meCName">Name</label><input class="input" id="meCName" maxlength="80"></div>
+          <div class="field"><label for="meCRel">Relationship</label><input class="input" id="meCRel" maxlength="40" placeholder="e.g. Partner"></div>
+          <div class="field"><label for="meCPhone">Phone</label><input class="input" type="tel" id="meCPhone" maxlength="30"></div>
+        </div>
+        <div class="row"><button class="btn btn-gold" type="submit">Save my details</button><button class="btn btn-ghost" type="button" id="signOut">Sign out</button></div>
+      </form>
+    </section>
+
+    <!-- PLAYERS (organisers) -->
+    <section class="view" id="v-players" aria-labelledby="h-players">
+      <header class="view-head"><p class="eyebrow">Organisers only</p><h1 id="h-players">Players</h1>
+        <p id="regSummary"></p></header>
+      <div class="grid2">
+        <div class="card invite-card">
+          <h2>Invite new members</h2>
+          <p class="muted-note">New players scan this, add their name and number, and appear below for you to approve.</p>
+          <div class="qr-wrap"><div class="qr" id="qrBox" aria-label="QR code to join Afrobeats FC"></div>
+            <div class="qr-cap"><img class="crest-img" alt="" width="34" height="50"><span><b>Scan to join</b><br>Afrobeats FC</span></div></div>
+          <div class="row">
+            <button class="btn btn-gold btn-sm" type="button" id="qrDownload">Download QR</button>
+            <button class="btn btn-ghost btn-sm" type="button" id="qrCopy">Copy join link</button>
+          </div>
+        </div>
+        <div class="card"><h2>Join requests <span class="count" id="joinCount"></span></h2><div id="joinList"></div></div>
+      </div>
+      <div class="card">
+        <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input class="input" type="search" id="regSearch" placeholder="Search players" aria-label="Search players"></div>
+        <div class="table-wrap"><table class="reg"><thead><tr><th>Member</th><th>Nickname</th><th>Position</th><th>Date of birth</th><th>Emergency contact</th></tr></thead><tbody id="regBody"></tbody></table></div>
+        <p class="muted-note">To make someone an organiser, tick their row in the <b>Organiser</b> column of the Members tab in the Google Sheet.</p>
+      </div>
+    </section>
+  </main>
+</div>
+
+<!-- Review overlay for the awards ballot -->
+<div class="overlay" id="review" hidden>
+  <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="reviewTitle">
+    <div class="stripe" aria-hidden="true"></div>
+    <p class="eyebrow">Final check</p>
+    <h1 id="reviewTitle">Your picks</h1>
+    <p class="muted">Once you submit, your vote is final.</p>
+    <ul class="review-list" id="reviewList"></ul>
+    <p class="msg" id="reviewMsg" role="alert"></p>
+    <div class="sheet-actions">
+      <button class="btn btn-ghost" type="button" id="backBtn">Back to ballot</button>
+      <button class="btn btn-gold" type="button" id="submitBtn">Submit my vote</button>
+    </div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<canvas id="confetti" aria-hidden="true"></canvas>
+
+<script>
+/* ===================================================================
+   Your Google Apps Script web app URL (ends in /exec)
+   =================================================================== */
+const SCRIPT_URL = "https://script.google.com/macros/s/AKfycbwuA3SLGPcSigdc90UEOff_UOLozcVONj_IGSuIpf5N1g-1LzMaiUdR11s_v2UqDEVKgw/exec";
+
+/* Awards. The ids must match CATEGORY_IDS in Code.gs, in the same order. */
+const GROUPS = [
+  { title: "On the pitch", note: "Positional awards", items: [
+    { id: "goalkeeper", label: "Best Goalkeeper", options: ["Kingsley", "Tomiwa", "Mazi", "Abimbola", "Tayo", "Ben", "Godsown", "Habeeb", "Ocheess", "Edirin", "Blessing", "Jordan Daniel"] },
+    { id: "defender", label: "Best Defender", options: ["Gaskiya", "Habib BM", "OTIS", "Jesse", "Shakur", "Alaska", "Nice", "Chimaobi", "Ben", "God's Own", "Abimbola", "Leke", "Obinna", "Boluxy", "Kingsley", "Olarh", "Dolapo", "Doug", "Phenom", "Tomiwa", "Tayo (Shakira)"] },
+    { id: "midfielder", label: "Best Midfielder", options: ["Obinna Bembe", "Vitalis", "Ben", "Jordan Daniel", "Mazi", "Ekaan", "Chimaobi", "Edirin", "OTIS", "Gaskiya", "Jon Snow", "Odinaka", "Efe Obels", "Teejay", "Bigserg", "Tayo (Shakira)"] },
+    { id: "winger", label: "Best Winger", options: ["Victor", "Jordan Daniel", "Inimitable", "Farouq", "Vitalis", "Ibrahim", "Ekaan", "Kingsley", "Jon Snow", "Sola Amure", "Esosa", "AZ"] },
+    { id: "striker", label: "Best Striker", options: ["Bishop", "Sola Okere", "Victor", "Alema", "Vitalis", "Adebola", "Ifeanyi", "Dolapo", "Chisom", "Prince Ihama", "Rucky Donald", "Francis"] },
+  ]},
+  { title: "Season awards", note: "Growth and leadership", items: [
+    { id: "improved", label: "Most Improved Player", options: ["Ola", "Kingsley", "Chike", "Sola Alacrity", "Dolapo"] },
+    { id: "teamlead", label: "Best Captain / Coach", options: ["Francis", "Phenom", "Jesse", "Abimbola", "Gaskiya", "Nice", "Ibrahim", "Richard", "Efe", "Sola Okere", "Bigserg", "Tayo", "Farouq", "Rucky Donald", "Fred", "Chimaobi", "Bolaji", "Mamuzio", "Sola Amure", "Edirin", "Ocheess", "Lebron", "Leke"] },
+  ]},
+  { title: "Moment of the season", note: "Pick one", items: [
+    { id: "omg", label: "ABFC OMG Moment 2026", sub: "Most unforgettable ABFC moment", noOther: true, keepOrder: true, options: [
+      "Gabonie and the party table nomination scandal",
+      "Leke and the April Fool trap",
+      "Sixtus in red-hot form and his Botanic Park drought",
+      "Kingsley’s hair BBL",
+      "Interim Manager Edirin snubbing Mazi, Shakur, Otis and Habib in Team Chosen",
+      "Leke leading the Rest of ABFC to a 1-1 draw against Interim Manager Edirin’s squad (Unchosen vs Chosen)",
+      "Interim Manager Edirin receiving a sack letter after a 10-2 win",
+      "Edirin assisting as a goalkeeper in Tuesday Challenge",
+      "Tayo winning his 1st Tuesday Challenge in the last one of the season (after 7 appearances)",
+      "Prince Ihama retiring only to appear in external matches",
+      "Kingsley accidentally posting the team formation on the ABFC Instagram account",
+      "Chike scoring a hat-trick at Saturday training",
+      "Aisosa sending Sola Alacrity tumbling 360 degrees backwards with a dribble",
+      "Godsown scoring a bicycle kick at Saturday training",
+    ]},
+  ]},
+];
+
+/* ---------- basics ---------- */
+const ITEMS = GROUPS.flatMap(g => g.items);
+const OTHER = "__other__";
+const TOKEN_KEY = "abfc-club-token", DRAFT_KEY = "abfc-2026-draft";
+const draftKey = () => DRAFT_KEY + ":" + String(token || "").split(".")[0];
+const TEST_MODE = !/^https:\/\/script\.google\.com\//.test(SCRIPT_URL) && !/^http:\/\/localhost/.test(SCRIPT_URL);
+const $ = id => document.getElementById(id);
+const clean = s => String(s || "").replace(/\s+/g, " ").trim();
+const esc = s => String(s == null ? "" : s).replace(/[&<>"']/g, c => ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" }[c]));
+const store = {
+  get(k) { try { return JSON.parse(localStorage.getItem(k)); } catch (e) { return null; } },
+  set(k, v) { try { localStorage.setItem(k, JSON.stringify(v)); } catch (e) {} },
+  del(k) { try { localStorage.removeItem(k); } catch (e) {} },
+};
+const reduceMotion = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+const ICON_SEARCH = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg>';
+const ICON_X = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" aria-hidden="true"><path d="M6 6l12 12M18 6L6 18"/></svg>';
+const ICON = {
+  pin: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><path d="M12 22s7-6.2 7-12a7 7 0 0 0-14 0c0 5.8 7 12 7 12z"/><circle cx="12" cy="10" r="2.5"/></svg>',
+  clock: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>',
+  cash: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><rect x="3" y="6" width="18" height="12" rx="2"/><circle cx="12" cy="12" r="2.5"/></svg>',
+  trophy: '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>',
+};
+document.querySelectorAll(".crest-img").forEach(img => img.src = $("crestSrc").href);
+
+function toast(text, err) {
+  const t = $("toast"); t.textContent = text; t.className = "toast on" + (err ? " err" : "");
+  clearTimeout(toast.t); toast.t = setTimeout(() => t.className = "toast", 3200);
+}
+function fmtDate(d, opts) {
+  if (!d) return "";
+  const x = new Date(d + "T12:00:00");
+  return isNaN(x) ? d : x.toLocaleDateString("en-GB", opts || { weekday: "short", day: "numeric", month: "short" });
+}
+
+/* ---------- server ---------- */
+let token = store.get(TOKEN_KEY), S = null;
+async function api(action, extra) {
+  const res = await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify(Object.assign({ action, token }, extra || {})) });
+  const out = await res.json();
+  if (out.signin) { signOut(); throw new Error(out.error); }
+  if (!out.ok) throw new Error(out.error || "Something went wrong.");
+  if (out.state) { S = out.state; render(); }
+  return out;
+}
+// Runs an action from a button, with a busy state and a toast
+async function act(action, extra, okText, btn) {
+  if (btn) { btn.disabled = true; }
+  try { await api(action, extra); if (okText) toast(okText); return true; }
+  catch (e) { toast(e.message, true); return false; }
+  finally { if (btn) btn.disabled = false; }
+}
+
+/* ---------- sign in ---------- */
+function normPhone(raw) {
+  let d = String(raw).replace(/[^\d+]/g, "");
+  if (d.startsWith("+")) d = d.slice(1); else if (d.startsWith("00")) d = d.slice(2); else if (d.startsWith("0")) d = "44" + d.slice(1);
+  return /^\d{10,15}$/.test(d) ? d : "";
+}
+$("gateForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const phone = normPhone($("voterPhone").value), msg = t => $("gateMsg").textContent = t;
+  $("fieldPhone").classList.toggle("invalid", !phone);
+  if (!phone) { msg("Enter your full phone number, e.g. 07123 456789."); return; }
+  if (TEST_MODE) { msg("Test mode: no Google Sheet is connected."); return; }
+  const b = $("enterBtn"); b.disabled = true; const label = b.innerHTML; b.textContent = "Checking…";
+  try {
+    const out = await (await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "signin", phone }) })).json();
+    if (!out.ok) { msg(out.error); return; }
+    token = out.token; store.set(TOKEN_KEY, token);
+    $("voterPhone").value = ""; msg("");
+    await startApp();
+  } catch (err) { msg("Couldn't reach the club sheet. Check your connection and try again."); }
+  finally { b.disabled = false; b.innerHTML = label; }
+});
+$("voterPhone").addEventListener("input", () => { $("gateMsg").textContent = ""; $("fieldPhone").classList.remove("invalid"); });
+function signOut() {
+  token = null; S = null; store.del(TOKEN_KEY); resetBallot();
+  tab = "matchday"; meDirty = false; history.replaceState(null, "", location.pathname);
+  showScreen("gate");
+}
+$("signOut").addEventListener("click", signOut);
+$("signOutTop").addEventListener("click", signOut);
+
+function showScreen(id) {
+  ["gate", "publicWinners", "joinScreen"].forEach(s => $(s).classList.toggle("on", s === id));
+  $("app").classList.toggle("on", id === "app");
+  window.scrollTo(0, 0);
+}
+
+async function startApp() {
+  showScreen("app");
+  $("mdGame").innerHTML = '<p class="loading">Loading the club…</p>';
+  try { await api("state"); } catch (e) { if (token) toast(e.message, true); return; }
+  route();
+}
+
+/* ---------- tabs ---------- */
+const TABS = ["matchday", "teams", "season", "football", "awards", "club", "me", "players"];
+let tab = "matchday";
+// While "Show club features" is off, members only get the Awards tab; organisers always see everything
+function allowedTabs() {
+  if (!S) return ["awards"];
+  if (S.me.organiser) return TABS;
+  return S.flags.clubOpen ? TABS.filter(t => t !== "players") : ["awards"];
+}
+function route() {
+  const h = location.hash.slice(1);
+  if (h === "join") { openJoin(); return; }
+  if (h === "winners") {
+    if (token) { tab = "awards"; } else { openPublicWinners(); return; }
+  } else if (TABS.includes(h)) tab = h;
+  if (token && !S) { startApp(); return; }
+  if (token && !$("app").classList.contains("on")) showScreen("app");
+  const ok = allowedTabs();
+  if (!ok.includes(tab)) tab = ok[0];
+  if (tab === "football") loadFootball();
+  document.querySelectorAll(".tabs a").forEach(a => a.classList.toggle("on", a.dataset.tab === tab));
+  document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === "v-" + tab));
+  if (tab === "awards" && S && S.awards.published) celebrate();
+  const on = document.querySelector(".tabs a.on"); if (on) on.scrollIntoView({ block: "nearest", inline: "center" });
+}
+window.addEventListener("hashchange", () => { if (token) { route(); window.scrollTo(0, 0); } else route(); });
+
+/* ---------- render everything from the latest state ---------- */
+function render() {
+  if (!S) return;
+  const org = S.me.organiser;
+  $("whoami").textContent = "Signed in as " + S.me.display;
+  $("orgBadge").hidden = !org;
+  const ok = allowedTabs();
+  document.querySelectorAll(".tabs a").forEach(a => a.hidden = !ok.includes(a.dataset.tab));
+  $("tabs").hidden = ok.length < 2;
+  $("signOutTop").hidden = ok.includes("me");
+  renderHello();
+  document.querySelectorAll(".org-only").forEach(el => el.hidden = !org);
+  renderMatchday(); renderTeams(); renderSeason(); renderAwards(); renderClub(); renderMe(); if (org) { renderPlayers(); renderJoinRequests(); renderQR(); }
+}
+
+/* ---------- matchday ---------- */
+function renderMatchday() {
+  const g = S.club.game, md = S.matchday;
+  if (!g) {
+    $("mdGame").innerHTML = '<div class="card"><p class="empty">No game has been set up yet.' + (S.me.organiser ? " Set up the next game below." : " Check back soon.") + '</p></div>';
+  } else {
+    const n = md.players.length, cap = g.capacity, my = md.myStatus;
+    const pill = my === "in" ? '<span class="status-pill status-in">You\'re playing</span>' : my === "wait" ? '<span class="status-pill status-wait">You\'re on the waiting list</span>' : "";
+    $("mdGame").innerHTML =
+      '<div class="card game-card">' +
+        '<div class="row" style="justify-content:space-between"><p class="game-when">' + esc(fmtDate(g.date, { weekday: "long", day: "numeric", month: "long" })) + '</p>' + pill + '</div>' +
+        '<div class="game-meta">' +
+          (g.time ? '<span class="chip">' + ICON.clock + esc(g.time) + '</span>' : "") +
+          (g.venue ? '<span class="chip">' + ICON.pin + esc(g.venue) + '</span>' : "") +
+          (g.fee ? '<span class="chip">' + ICON.cash + esc(g.fee) + '</span>' : "") +
+        '</div>' +
+        '<div class="spots"><div class="spots-text"><span>' + n + ' of ' + cap + ' spots taken</span><span>' + Math.max(0, cap - n) + ' left</span></div>' +
+          '<div class="spots-bar"><i style="width:' + Math.min(100, n / cap * 100) + '%"></i></div></div>' +
+        (my ? '<button class="btn btn-ghost" type="button" data-act="leave">' + (my === "in" ? "I can't make it" : "Leave the waiting list") + '</button>'
+            : '<button class="btn btn-gold" type="button" data-act="join">' + (n < cap ? "I'm in" : "Join the waiting list") + '</button>') +
+      '</div>';
+  }
+  $("mdCount").textContent = g ? md.players.length + " / " + g.capacity : "";
+  $("mdWaitCount").textContent = md.waiting.length ? String(md.waiting.length) : "";
+  $("mdPlayers").innerHTML = playerList(md.players, "Nobody has signed up yet.");
+  $("mdWaiting").innerHTML = playerList(md.waiting, "Nobody is waiting.");
+  if (g && !gameFormDirty) { $("gDate").value = g.date; $("gTime").value = g.time; $("gVenue").value = g.venue; $("gFee").value = g.fee; $("gCap").value = g.capacity; }
+}
+function playerList(list, empty) {
+  if (!list.length) return '<p class="empty">' + empty + '</p>';
+  const org = S.me.organiser;
+  return '<ol class="plist">' + list.map(p =>
+    '<li class="' + (p.mine ? "me" : "") + '"><span class="nm">' + esc(p.name) + (p.guest ? "<small>guest</small>" : "") + (p.mine ? "<small>you</small>" : "") + '</span><span class="acts">' +
+      (org ? '<button type="button" class="tag ' + (p.paid ? "tag-paid" : "tag-unpaid") + '" data-act="setPaid" data-id="' + esc(p.id) + '" data-paid="' + (p.paid ? "" : "1") + '" aria-label="Mark ' + esc(p.name) + (p.paid ? ' unpaid' : ' paid') + '">' + (p.paid ? "Paid" : "Unpaid") + '</button>'
+           + '<button type="button" class="icon-btn" data-act="removeSignup" data-id="' + esc(p.id) + '" aria-label="Remove ' + esc(p.name) + '">' + ICON_X + '</button>'
+           : (p.paid ? '<span class="tag tag-paid">Paid</span>' : "")) +
+    '</span></li>').join("") + '</ol>';
+}
+let gameFormDirty = false;
+["gDate", "gTime", "gVenue", "gFee", "gCap"].forEach(id => $(id).addEventListener("input", () => gameFormDirty = true));
+$("gameForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const ok = await act("newGame", { game: { date: $("gDate").value, time: $("gTime").value, venue: $("gVenue").value, fee: $("gFee").value, capacity: $("gCap").value } }, "Next game saved. Sign-ups are open.", e.submitter);
+  if (ok) gameFormDirty = false;
+});
+$("guestForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (await act("addGuest", { name: $("guestName").value }, "Guest added.", e.submitter)) $("guestName").value = "";
+});
+
+/* ---------- teams ---------- */
+function renderTeams() {
+  const t = S.teams, g = S.club.game;
+  $("teamsSub").textContent = g ? "For " + fmtDate(g.date, { weekday: "long", day: "numeric", month: "long" }) + ". Picked at random from the playing list, balanced by position." : "Picked at random from the playing list, balanced by position.";
+  $("pickBtn").textContent = t.picked ? "Reshuffle teams" : "Pick random teams";
+  if (!t.picked) {
+    $("teamsBox").innerHTML = '<div class="card"><p class="empty">Teams haven\'t been picked yet.' + (S.me.organiser ? "" : " The organisers will pick them before kick-off.") + '</p></div>';
+    return;
+  }
+  const posName = { GK: "GK", DEF: "DEF", MID: "MID", ATT: "ATT" };
+  $("teamsBox").innerHTML = '<div class="teams">' + t.list.map(team =>
+    '<div class="team ' + team.name.toLowerCase() + '"><div class="team-head">' + esc(team.name) + ' bibs<span class="n">' + team.players.length + ' players</span></div><ol>' +
+      team.players.map(p => '<li>' + esc(p.name) + (p.position ? '<span class="pos">' + posName[p.position] + '</span>' : "") + '</li>').join("") +
+    '</ol></div>').join("") + '</div>';
+}
+
+/* ---------- season ---------- */
+let board = "goals";
+function renderSeason() {
+  const se = S.season;
+  $("resCount").textContent = se.results.length ? String(se.results.length) : "";
+  $("resultsBox").innerHTML = se.results.length ? '<div class="form-grid">' + se.results.map(r =>
+    '<div class="result"><div class="d">' + esc(fmtDate(r.game, { month: "short" })) + '<b>' + esc(fmtDate(r.game, { day: "numeric" })) + '</b></div>' +
+    '<div class="score"><span class="dot-o"></span>Orange <span class="sc">' + r.orange + '–' + r.blue + '</span> Blue <span class="dot-b"></span></div>' +
+    '<div class="who">' + (r.scorers.length ? r.scorers.map(s => esc(s.name) + (s.goals > 1 ? " ×" + s.goals : "")).join(", ") : "No scorers recorded") + '</div></div>').join("") + '</div>'
+    : '<p class="empty">No results yet.</p>';
+  const list = se.leaders[board] || [], max = list.length ? list[0].n : 1;
+  $("boardBox").innerHTML = list.length ? '<ol class="board">' + list.map((x, i) =>
+    '<li><span class="bar" style="width:' + (x.n / max * 100) + '%"></span><span class="rk">' + (i + 1) + '</span><span class="nm">' + esc(x.name) + '</span><span class="v">' + x.n + '</span></li>').join("") + '</ol>'
+    : '<p class="empty">Nothing recorded yet.</p>';
+  document.querySelectorAll("#boardTabs button").forEach(b => b.classList.toggle("on", b.dataset.board === board));
+  renderMotm();
+  if (!resultFormDirty) {
+    $("rDate").value = (S.club.game && S.club.game.date) || "";
+    if (!$("scorerRows").children.length) for (let i = 0; i < 3; i++) addScorerRow();
+  }
+  const dl = $("playerNames") || Object.assign(document.body.appendChild(document.createElement("datalist")), { id: "playerNames" });
+  const names = new Set(); S.teams.list.forEach(t => t.players.forEach(p => names.add(p.name))); S.matchday.players.forEach(p => names.add(p.name));
+  dl.innerHTML = [...names].sort().map(n => '<option value="' + esc(n) + '">').join("");
+}
+$("boardTabs").addEventListener("click", e => { const b = e.target.closest("button"); if (b) { board = b.dataset.board; renderSeason(); } });
+
+function renderMotm() {
+  const m = S.season.motm, box = $("motmBox");
+  if (!m) { box.innerHTML = ""; return; }
+  const when = fmtDate(m.game, { weekday: "long", day: "numeric", month: "long" });
+  if (m.myVote || (S.me.organiser && m.votes)) {
+    const max = m.tally.length ? m.tally[0].votes : 1;
+    box.innerHTML = '<div class="card notice-card"><h2>' + ICON.trophy.replace("<svg", '<svg width="18" height="18"') + ' Man of the Match · ' + esc(when) + '<span class="count">' + m.votes + (m.votes === 1 ? " vote" : " votes") + '</span></h2>' +
+      (m.myVote ? '<p class="muted-note">You voted for <b>' + esc(m.myVote) + '</b>.</p>' : "") +
+      '<ol class="board">' + m.tally.map((x, i) => '<li><span class="bar" style="width:' + (x.votes / max * 100) + '%"></span><span class="rk">' + (i + 1) + '</span><span class="nm">' + esc(x.name) + '</span><span class="v">' + x.votes + '</span></li>').join("") + '</ol></div>';
+    return;
+  }
+  const opts = m.eligible.length ? '<div class="choices">' + m.eligible.map((n, k) => '<label class="choice"><input type="radio" name="motm" value="' + esc(n) + '" id="motm-' + k + '"><span>' + esc(n) + '</span></label>').join("") + '</div>'
+    : '<input class="input" id="motmFree" placeholder="Player\'s name" list="playerNames">';
+  box.innerHTML = '<div class="card notice-card"><h2>' + ICON.trophy.replace("<svg", '<svg width="18" height="18"') + ' Man of the Match · ' + esc(when) + '</h2><p class="muted-note">Who was the best player on the pitch? One vote each.</p>' + opts +
+    '<button class="btn btn-gold" type="button" data-act="motmVote">Vote</button></div>';
+}
+
+let resultFormDirty = false;
+function addScorerRow() {
+  const r = document.createElement("div"); r.className = "scorer-row";
+  r.innerHTML = '<input class="input" list="playerNames" placeholder="Name" aria-label="Player"><input class="input" type="number" min="0" value="0" aria-label="Goals"><input class="input" type="number" min="0" value="0" aria-label="Assists"><button type="button" class="icon-btn" aria-label="Remove row">' + ICON_X + '</button>';
+  r.querySelector("button").onclick = () => r.remove();
+  $("scorerRows").appendChild(r);
+}
+$("addScorer").addEventListener("click", addScorerRow);
+$("resultForm").addEventListener("input", () => resultFormDirty = true);
+$("resultForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const scorers = [...$("scorerRows").children].map(r => { const i = r.querySelectorAll("input"); return { name: i[0].value, goals: i[1].value, assists: i[2].value }; }).filter(s => clean(s.name));
+  const ok = await act("recordResult", { result: { game: $("rDate").value, orange: $("rOrange").value, blue: $("rBlue").value, scorers } }, "Result saved. Man of the Match voting is open.", e.submitter);
+  if (ok) { resultFormDirty = false; $("scorerRows").innerHTML = ""; $("rOrange").value = 0; $("rBlue").value = 0; renderSeason(); }
+});
+
+/* ---------- club ---------- */
+let noticeDirty = false;
+$("noticeText").addEventListener("input", () => noticeDirty = true);
+function renderClub() {
+  $("noticeBox").innerHTML = S.club.notice ? '<div class="card notice-card"><h2>Pinned notice</h2><p class="notice-text">' + esc(S.club.notice) + '</p></div>' : "";
+  if (!noticeDirty) $("noticeText").value = S.club.notice;
+  const today = new Date().toISOString().slice(0, 10);
+  const fx = S.fixtures.filter(f => f.date >= today);
+  $("fixturesBox").innerHTML = fx.length ? '<div class="form-grid">' + fx.map(f =>
+    '<div class="fixture"><div class="d"><span>' + esc(fmtDate(f.date, { month: "short" })) + '</span><b>' + esc(fmtDate(f.date, { day: "numeric" })) + '</b></div>' +
+    '<div><div class="t">' + esc(f.title) + '</div><div class="m">' + esc([fmtDate(f.date, { weekday: "long" }), f.time, f.venue].filter(Boolean).join(" · ")) + '</div></div>' +
+    (S.me.organiser ? '<button type="button" class="icon-btn" data-act="removeFixture" data-id="' + esc(f.id) + '" aria-label="Remove ' + esc(f.title) + '">' + ICON_X + '</button>' : "<span></span>") + '</div>').join("") + '</div>'
+    : '<p class="empty">No fixtures coming up.</p>';
+}
+$("noticeForm").addEventListener("submit", async e => { e.preventDefault(); if (await act("setNotice", { text: $("noticeText").value }, "Notice saved.", e.submitter)) noticeDirty = false; });
+$("fixtureForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  if (await act("addFixture", { fixture: { title: $("fTitle").value, venue: $("fVenue").value, date: $("fDate").value, time: $("fTime").value } }, "Fixture added.", e.submitter))
+    ["fTitle", "fVenue", "fDate", "fTime"].forEach(id => $(id).value = "");
+});
+
+/* ---------- my details ---------- */
+let meDirty = false;
+const ME = { meNick: "nickname", mePos: "position", meFull: "fullName", meDob: "dob", meCName: "contactName", meCRel: "contactRelation", meCPhone: "contactPhone" };
+Object.keys(ME).forEach(id => $(id).addEventListener("input", () => meDirty = true));
+$("meDob").addEventListener("input", e => {
+  if (e.inputType && e.inputType.startsWith("delete")) return;
+  const d = e.target.value.replace(/\D/g, "").slice(0, 8);
+  e.target.value = d.length > 4 ? d.slice(0, 2) + "/" + d.slice(2, 4) + "/" + d.slice(4) : d.length > 2 ? d.slice(0, 2) + "/" + d.slice(2) : d;
+});
+function renderMe() {
+  if (meDirty) return;
+  const r = S.register.mine;
+  Object.entries(ME).forEach(([id, k]) => $(id).value = r[k] || "");
+  $("meNick").placeholder = r.memberName;
+}
+$("meForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const data = {}; Object.entries(ME).forEach(([id, k]) => data[k] = $(id).value);
+  if (await act("saveRegister", { data }, "Your details are saved.", e.submitter)) { meDirty = false; renderMe(); }
+});
+
+/* ---------- player register (organisers) ---------- */
+function renderPlayers() {
+  const all = S.register.all || [], q = clean($("regSearch").value).toLowerCase();
+  const done = all.filter(p => p.done).length;
+  $("regSummary").textContent = done + " of " + all.length + " members have filled in their details. Keep this private: it holds dates of birth and emergency contacts.";
+  const rows = all.filter(p => !q || (p.member + " " + p.nickname + " " + p.fullName).toLowerCase().includes(q));
+  const cell = v => v ? "<td>" + esc(v) + "</td>" : '<td class="missing">—</td>';
+  $("regBody").innerHTML = rows.map(p => "<tr><td><b>" + esc(p.member) + "</b>" + (p.organiser ? ' <span class="tag tag-paid">Organiser</span>' : "") + (p.fullName ? "<br><span class=\"muted\">" + esc(p.fullName) + "</span>" : "") + "</td>" +
+    cell(p.nickname) + cell(p.position) + cell(p.dob) + cell([p.contactName, p.contactRelation && "(" + p.contactRelation + ")", p.contactPhone].filter(Boolean).join(" ")) + "</tr>").join("") ||
+    '<tr><td colspan="5" class="missing">No players match.</td></tr>';
+}
+$("regSearch").addEventListener("input", renderPlayers);
+
+/* ---------- buttons that call the server ---------- */
+document.addEventListener("click", async e => {
+  const b = e.target.closest("[data-act]"); if (!b) return;
+  const a = b.dataset.act;
+  if (a === "join") act("join", null, "You're in! See you on the pitch.", b);
+  else if (a === "leave") act("leave", null, "You've been taken off the list.", b);
+  else if (a === "setPaid") act("setPaid", { id: b.dataset.id, paid: !!b.dataset.paid }, null, b);
+  else if (a === "removeSignup") { if (b.dataset.confirm) act("removeSignup", { id: b.dataset.id }, "Player removed.", b); else { b.dataset.confirm = "1"; b.style.borderColor = "var(--bad)"; b.style.color = "var(--bad)"; toast("Tap again to remove this player."); setTimeout(() => { delete b.dataset.confirm; b.style.cssText = ""; }, 3000); } }
+  else if (a === "pickTeams") act("pickTeams", null, "Teams picked.", b);
+  else if (a === "clearTeams") act("clearTeams", null, "Teams cleared.", b);
+  else if (a === "removeFixture") act("removeFixture", { id: b.dataset.id }, "Fixture removed.", b);
+  else if (a === "motmVote") {
+    const r = document.querySelector('input[name="motm"]:checked'), f = $("motmFree");
+    const pick = r ? r.value : f ? f.value : "";
+    if (!clean(pick)) { toast("Pick a player first.", true); return; }
+    act("motmVote", { pick }, "Vote counted. Thanks!", b);
+  }
+});
+
+/* ================= AWARDS ================= */
+let ballotBuilt = false;
+const REVEAL = "Winners will be revealed on awards night, Saturday 5 December.";
+const normName = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
+const isSelf = (id, name) => id !== "omg" && !!S && (S.awards.selfNames || []).includes(normName(name));
+function fmtWhen(ms) {
+  const d = new Date(ms), o = { timeZone: "Europe/London" };
+  const day = d.toLocaleDateString("en-GB", Object.assign({ weekday: "short", day: "numeric", month: "short" }, o));
+  const t = d.toLocaleTimeString("en-GB", Object.assign({ hour: "numeric", minute: "2-digit", hour12: true }, o)).replace(/\s/g, "").replace(":00", "").toLowerCase();
+  return day + " at " + t;
+}
+function timeLeft(ms) {
+  if (ms <= 0) return "";
+  const m = Math.ceil(ms / 6e4), d = Math.floor(m / 1440), h = Math.floor(m % 1440 / 60), mi = m % 60;
+  const u = (n, w) => n + " " + w + (n === 1 ? "" : "s");
+  return d ? u(d, "day") + (h ? " " + u(h, "hr") : "") : h ? u(h, "hr") + (mi ? " " + u(mi, "min") : "") : u(mi, "min");
+}
+function voteClock(a) {
+  const now = Date.now();
+  if (a.phase === "before" && a.opensAt) { const l = timeLeft(a.opensAt - now); return "Voting opens " + fmtWhen(a.opensAt) + (l ? " · in " + l : ""); }
+  if (a.phase === "open" && a.closesAt) { const l = timeLeft(a.closesAt - now); return "Voting closes " + fmtWhen(a.closesAt) + (l ? " · " + l + " left" : ""); }
+  return "";
+}
+function renderAwards() {
+  const a = S.awards, org = S.me.organiser;
+  $("awardsSub").textContent = a.published ? "The results are in." : a.voted ? "" : a.open ? "Pick one for each award. Not on the list? Choose Someone else and type the name. You can't vote for yourself." : "";
+  $("ballotWrap").hidden = true; $("winnersGrid").innerHTML = ""; $("awardsBox").innerHTML = "";
+  if (a.published) { renderWinners($("winnersGrid"), { ballots: a.ballots, awards: a.winners }); return; }
+  let html = "";
+  const clock = voteClock(a);
+  if (clock) html += '<p class="vote-clock' + (a.phase === "open" ? " live" : "") + '" id="voteClock">' + esc(clock) + '</p>';
+  if (org && a.private) {
+    html += '<div class="card private-card"><h2>Results (organisers only)</h2><p>Members can\'t see these yet. ' + a.private.ballots + ' of ' + (a.turnout ? a.turnout.members : "?") +
+      ' members voted. Use this to order the cups. To reveal the winners on awards night, tick <b>Show winners</b> in the Settings tab.</p></div>';
+  } else if (org && a.turnout && a.phase !== "before") {
+    html += '<div class="card turnout-card"><p><b>' + a.turnout.ballots + ' of ' + a.turnout.members + ' members have voted.</b> Only organisers see this count. Results stay hidden until voting closes.</p></div>';
+  }
+  if (org && a.private) {
+    // results card already says it all
+  } else if (a.voted) {
+    html += '<div class="card notice-card"><h2>' + ICON.trophy.replace("<svg", '<svg width="18" height="18"') + ' Vote counted</h2><p>Thanks, ' + esc(S.me.display.split(" ")[0]) + '. Your ballot is in. ' + REVEAL + '</p></div>';
+  } else if (a.phase === "before") {
+    html += '<div class="card notice-card"><h2>' + ICON.trophy.replace("<svg", '<svg width="18" height="18"') + ' Voting opens soon</h2><p>The ballot opens ' + (a.opensAt ? esc(fmtWhen(a.opensAt)) : "soon") + ' and closes ' + (a.closesAt ? esc(fmtWhen(a.closesAt)) : "later") + '. Come back then to vote: one pick for each award.</p></div>';
+  } else if (!a.open && !(org && a.private)) {
+    html += '<div class="card"><p class="empty">Voting has closed. ' + REVEAL + '</p></div>';
+  }
+  $("awardsBox").innerHTML = html;
+  if (org && a.private) { renderWinners($("winnersGrid"), a.private); return; }
+  if (a.voted || !a.open) return;
+  if (!ballotBuilt) { buildBallot(); ballotBuilt = true; }
+  $("ballotWrap").hidden = false;
+  refreshBallot();
+}
+function resetBallot() {
+  ballotBuilt = false; $("form").innerHTML = "";
+  const dl = $("awardNames"); if (dl) dl.remove();
+}
+// Keep the countdown ticking, and fetch fresh state the moment voting opens or closes
+setInterval(() => {
+  if (!S || !S.awards) return;
+  const a = S.awards, el = $("voteClock");
+  if (el) el.textContent = voteClock(a);
+  const edge = a.phase === "before" ? a.opensAt : a.phase === "open" ? a.closesAt : null;
+  if (edge && Date.now() > edge + 3000 && token && !S._edgeAsked) { S._edgeAsked = true; api("state").catch(() => {}); }
+}, 20000);
+
+function buildBallot() {
+  const form = $("form");
+  let n = 0;
+  GROUPS.forEach(g => {
+    const sec = document.createElement("section");
+    sec.className = "group";
+    sec.innerHTML = '<div class="group-title"><h2></h2><span></span></div>';
+    sec.querySelector("h2").textContent = g.title; sec.querySelector("span").textContent = g.note;
+    g.items.forEach(item => {
+      n++;
+      const hiddenSelf = item.options.filter(o => isSelf(item.id, o));
+      const opts = (item.keepOrder ? item.options : [...item.options].sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }))).filter(o => !hiddenSelf.includes(o));
+      const long = opts.some(o => o.length > 22);
+      const card = document.createElement("div");
+      card.className = "award"; card.id = "card-" + item.id;
+      card.setAttribute("role", "radiogroup"); card.setAttribute("aria-labelledby", "t-" + item.id);
+      card.innerHTML = '<div class="award-head"><span class="award-num" aria-hidden="true">' + String(n).padStart(2, "0") + '</span>' +
+        '<div class="award-title"><h3 id="t-' + item.id + '"></h3><span class="sub"></span></div><span class="award-pick" id="p-' + item.id + '"></span></div>';
+      card.querySelector("h3").textContent = item.label;
+      card.querySelector(".sub").textContent = item.sub || (opts.length + " nominees" + (hiddenSelf.length ? " · your name is hidden" : ""));
+      if (opts.length >= 10 && !item.noOther) {
+        const s = document.createElement("div"); s.className = "search";
+        s.innerHTML = ICON_SEARCH + '<input class="input" type="search" autocomplete="off" placeholder="Search nominees">';
+        const si = s.querySelector("input"); si.id = "s-" + item.id; si.setAttribute("aria-label", "Search " + item.label + " nominees");
+        si.addEventListener("input", () => filter(item.id));
+        card.appendChild(s);
+      }
+      const box = document.createElement("div");
+      box.className = "choices" + (long ? " long" : ""); box.id = "f-" + item.id;
+      opts.forEach((opt, k) => box.appendChild(choice(item.id, opt, opt, k)));
+      if (!item.noOther) box.appendChild(choice(item.id, OTHER, "Someone else", "other", true));
+      card.appendChild(box);
+      const nm = document.createElement("p"); nm.className = "no-match"; nm.id = "nm-" + item.id; nm.hidden = true;
+      nm.textContent = "No nominee matches. Choose Someone else to add them."; card.appendChild(nm);
+      if (!item.noOther) {
+        const inp = document.createElement("input");
+        inp.className = "input"; inp.type = "text"; inp.id = "o-" + item.id; inp.hidden = true;
+        inp.setAttribute("list", "awardNames"); inp.autocomplete = "off"; inp.placeholder = "Type the player's name";
+        inp.setAttribute("aria-label", item.label + ": someone else");
+        card.appendChild(inp);
+      }
+      sec.appendChild(card);
+    });
+    form.appendChild(sec);
+  });
+  const dl = document.createElement("datalist"); dl.id = "awardNames";
+  [...new Set(ITEMS.filter(i => !i.noOther).flatMap(i => i.options))].sort().forEach(nm => { const o = document.createElement("option"); o.value = nm; dl.appendChild(o); });
+  document.body.appendChild(dl);
+  restoreDraft();
+  ITEMS.forEach(i => { if ($("s-" + i.id)) filter(i.id); });
+}
+function choice(group, value, text, k, isOther) {
+  const l = document.createElement("label"); l.className = "choice" + (isOther ? " other" : "");
+  const r = document.createElement("input"); r.type = "radio"; r.name = group; r.value = value; r.id = "f-" + group + "-" + k;
+  const s = document.createElement("span"); s.textContent = text;
+  l.append(r, s); return l;
+}
+function filter(id) {
+  const q = clean($("s-" + id).value).toLowerCase(); let shown = 0;
+  document.querySelectorAll("#f-" + id + " .choice").forEach(l => {
+    const r = l.querySelector("input");
+    const keep = r.value === OTHER || r.checked || !q || r.value.toLowerCase().includes(q);
+    l.hidden = !keep; if (keep && r.value !== OTHER) shown++;
+  });
+  $("nm-" + id).hidden = !(q && shown === 0);
+}
+function values() {
+  const v = {};
+  ITEMS.forEach(i => {
+    const r = document.querySelector('input[name="' + i.id + '"]:checked'), o = $("o-" + i.id);
+    if (o) o.hidden = !(r && r.value === OTHER);
+    v[i.id] = !r ? "" : r.value === OTHER ? clean(o.value) : r.value;
+  });
+  return v;
+}
+function refreshBallot() {
+  const v = values(); let done = 0;
+  ITEMS.forEach(i => {
+    const ok = !!v[i.id]; if (ok) done++;
+    $("card-" + i.id).classList.toggle("done", ok); if (ok) $("card-" + i.id).classList.remove("invalid");
+    $("p-" + i.id).textContent = ok ? v[i.id] : "";
+  });
+  $("dockReview").textContent = done === ITEMS.length ? "Review my ballot" : "Review my ballot · " + done + "/" + ITEMS.length;
+  return { v, done };
+}
+function saveDraft() {
+  const picks = {}, others = {};
+  ITEMS.forEach(i => { const r = document.querySelector('input[name="' + i.id + '"]:checked'); if (r) picks[i.id] = r.value; const o = $("o-" + i.id); if (o && o.value) others[i.id] = o.value; });
+  store.set(draftKey(), { picks, others });
+}
+function restoreDraft() {
+  const d = store.get(draftKey()); if (!d) return;
+  Object.entries(d.picks || {}).forEach(([id, val]) => { const r = [...document.querySelectorAll('input[name="' + id + '"]')].find(x => x.value === val); if (r) r.checked = true; });
+  Object.entries(d.others || {}).forEach(([id, val]) => { const o = $("o-" + id); if (o) o.value = val; });
+}
+function goToAward(id) {
+  const c = $("card-" + id);
+  c.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "start" });
+  c.classList.add("flash"); setTimeout(() => c.classList.remove("flash"), 900);
+}
+function nextAfter(id) {
+  const v = values(), idx = ITEMS.findIndex(i => i.id === id);
+  return ITEMS.slice(idx + 1).concat(ITEMS.slice(0, idx)).find(i => !v[i.id]);
+}
+let advanceTimer = null;
+$("form").addEventListener("input", () => { refreshBallot(); saveDraft(); $("msg").textContent = ""; });
+$("form").addEventListener("change", e => {
+  const t = e.target; if (t.type !== "radio") return;
+  clearTimeout(advanceTimer);
+  if (t.value === OTHER) { const o = $("o-" + t.name); if (o) o.focus(); return; }
+  const nxt = nextAfter(t.name);
+  advanceTimer = setTimeout(() => { if (nxt) goToAward(nxt.id); }, 380);
+});
+$("form").addEventListener("submit", e => e.preventDefault());
+$("dockReview").onclick = () => {
+  const { v } = refreshBallot();
+  const selfPick = ITEMS.find(i => v[i.id] && isSelf(i.id, v[i.id]));
+  if (selfPick) { $("card-" + selfPick.id).classList.add("invalid"); $("msg").textContent = "You can't vote for yourself for " + selfPick.label + ". Pick someone else."; goToAward(selfPick.id); return; }
+  const missing = ITEMS.filter(i => !v[i.id]);
+  missing.forEach(i => $("card-" + i.id).classList.add("invalid"));
+  if (missing.length) {
+    const m = missing[0], o = $("o-" + m.id), typing = o && !o.hidden;
+    $("msg").textContent = missing.length > 1 ? missing.length + " awards still need a pick." : typing ? "Type a name for " + m.label + "." : "Pick your " + m.label + ".";
+    goToAward(m.id); return;
+  }
+  $("reviewList").innerHTML = "";
+  ITEMS.forEach(i => {
+    const li = document.createElement("li");
+    li.innerHTML = '<span class="k"></span><span class="v"></span><button type="button">Change</button>';
+    li.querySelector(".k").textContent = i.label; li.querySelector(".v").textContent = v[i.id];
+    li.querySelector("button").onclick = () => { $("review").hidden = true; goToAward(i.id); };
+    $("reviewList").appendChild(li);
+  });
+  $("reviewMsg").textContent = ""; $("review").hidden = false; $("submitBtn").focus();
+};
+$("backBtn").onclick = () => $("review").hidden = true;
+$("submitBtn").onclick = async () => {
+  const b = $("submitBtn"); b.disabled = true; b.textContent = "Sending…";
+  try { await api("awardsVote", { picks: values() }); store.del(draftKey()); $("review").hidden = true; toast("Vote counted. Thank you!"); window.scrollTo(0, 0); }
+  catch (e) { $("reviewMsg").textContent = e.message; }
+  finally { b.disabled = false; b.textContent = "Submit my vote"; }
+};
+
+/* ---------- winners ---------- */
+const PODIUM_BG = ["", "linear-gradient(180deg,#ffe08a,#e2a92b)", "linear-gradient(180deg,#f1f4f6,#a9b4bc)", "linear-gradient(180deg,#f2b98a,#b8733e)"];
+function renderWinners(grid, data) {
+  grid.innerHTML = "";
+  const byId = {}; (data.awards || []).forEach(a => byId[a.id] = a);
+  const plural = n => n + (n === 1 ? " vote" : " votes");
+  const head = document.createElement("p"); head.className = "muted-note"; head.style.gridColumn = "1 / -1";
+  head.textContent = data.ballots ? "Voted for by " + data.ballots + (data.ballots === 1 ? " member." : " members.") + " Congratulations to every winner, and thank you to everyone who voted." : "";
+  grid.appendChild(head);
+  ITEMS.forEach(item => {
+    const top = (byId[item.id] && byId[item.id].top) || [];
+    const card = document.createElement("article"); card.className = "wn-card";
+    const h = document.createElement("h2"); h.textContent = item.label; card.appendChild(h);
+    if (!top.length) { const p = document.createElement("p"); p.className = "wn-empty"; p.textContent = "No votes in this award."; card.appendChild(p); grid.appendChild(card); return; }
+    const at = place => top.filter(t => t.place === place);
+    if (top.some(t => t.name.length > 24)) {
+      card.classList.add("wide");
+      const ol = document.createElement("ol"); ol.className = "ranks";
+      top.forEach(t => {
+        const li = document.createElement("li"); li.className = "p" + t.place;
+        li.innerHTML = '<span class="medal">' + t.place + '</span><span class="who"></span><span class="votes"></span>';
+        li.querySelector(".medal").style.background = PODIUM_BG[t.place];
+        li.querySelector(".who").textContent = t.name; li.querySelector(".votes").textContent = plural(t.votes);
+        ol.appendChild(li);
+      });
+      card.appendChild(ol);
+    } else {
+      const pod = document.createElement("div"); pod.className = "podium";
+      [2, 1, 3].forEach(place => {
+        const w = at(place), col = document.createElement("div");
+        col.className = "pod p" + place + (w.length ? "" : " empty");
+        col.innerHTML = '<span class="who"></span><span class="votes"></span><span class="medal">' + place + '</span><span class="block"></span>';
+        col.querySelector(".who").textContent = w.length ? w.map(t => t.name).join(" & ") : "—";
+        col.querySelector(".votes").textContent = w.length ? plural(w[0].votes) : "";
+        col.querySelector(".block").textContent = ["", "1st", "2nd", "3rd"][place];
+        pod.appendChild(col);
+      });
+      card.appendChild(pod);
+    }
+    const c = document.createElement("div"); c.className = "congrats"; c.innerHTML = ICON.trophy + "<p></p>";
+    const p = c.querySelector("p"), b = document.createElement("b"); b.textContent = at(1).map(t => t.name).join(" & ");
+    if (item.id === "omg") p.append("Moment of the season: ", b); else p.append("Congratulations, ", b, "!");
+    card.appendChild(c); grid.appendChild(card);
+  });
+}
+let celebrated = false;
+function celebrate() { if (celebrated) return; celebrated = true; confetti(); }
+function confetti() {
+  if (reduceMotion) return;
+  const cv = $("confetti"), ctx = cv.getContext("2d");
+  const W = cv.width = innerWidth, H = cv.height = innerHeight;
+  const colors = ["#f2c14e", "#1f9d55", "#d94b3f", "#ffffff", "#c9952a"];
+  const bits = Array.from({ length: 160 }, () => ({ x: Math.random() * W, y: -20 - Math.random() * H * .6, r: 4 + Math.random() * 5, vx: -1.5 + Math.random() * 3, vy: 2 + Math.random() * 3.5, a: Math.random() * 6, va: -.2 + Math.random() * .4, c: colors[(Math.random() * colors.length) | 0] }));
+  const end = performance.now() + 3800;
+  (function tick(t) {
+    ctx.clearRect(0, 0, W, H);
+    bits.forEach(b => { b.x += b.vx; b.y += b.vy; b.a += b.va; ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(b.a); ctx.fillStyle = b.c; ctx.fillRect(-b.r / 2, -b.r / 4, b.r, b.r / 2); ctx.restore(); });
+    if (t < end) requestAnimationFrame(tick); else ctx.clearRect(0, 0, W, H);
+  })(performance.now());
+}
+// Public winners page (#winners) works without signing in, for sharing on awards night
+async function fetchWinners() {
+  if (TEST_MODE) return null;
+  try { const o = await (await fetch(SCRIPT_URL + "?winners=1")).json(); return o && o.published ? o : null; } catch (e) { return null; }
+}
+async function openPublicWinners() {
+  showScreen("publicWinners");
+  const data = await fetchWinners();
+  if (!data) { $("publicWinnersGrid").innerHTML = '<p class="wn-empty" style="grid-column:1/-1">The winners haven\'t been revealed yet. Check back after the awards night.</p>'; return; }
+  renderWinners($("publicWinnersGrid"), data);
+  celebrated = false; celebrate();
+}
+$("winnersBack").addEventListener("click", e => { e.preventDefault(); history.replaceState(null, "", location.pathname); showScreen("gate"); });
+(async () => { const d = await fetchWinners(); if (d) $("winnersLinkGate").hidden = false; })();
+
+/* ================= HELLO: greeting, countdown, birthdays, install ================= */
+function greeting(d) { const h = d.getHours(); return h < 5 ? "Good evening" : h < 12 ? "Good morning" : h < 17 ? "Good afternoon" : "Good evening"; }
+function kickoff(g) {
+  if (!g || !g.date) return null;
+  const t = new Date(g.date + "T" + (/^\d{2}:\d{2}$/.test(g.time) ? g.time : "12:00") + ":00");
+  return isNaN(t) ? null : t;
+}
+function countdownText(g, now) {
+  const k = kickoff(g); if (!k) return "";
+  const today = now.toDateString() === k.toDateString();
+  if (today) return now < k ? "It's matchday! Kick-off at " + g.time + (g.venue ? ", " + g.venue : "") : "It's matchday!";
+  const ms = k - now; if (ms < 0) return "";
+  const days = Math.floor(ms / 864e5), hrs = Math.floor(ms % 864e5 / 36e5);
+  return "Next game in " + (days ? days + (days === 1 ? " day " : " days ") : "") + hrs + (hrs === 1 ? " hr" : " hrs") + " · " + fmtDate(g.date, { weekday: "short", day: "numeric", month: "short" });
+}
+let installEvt = null, bdayCelebrated = false;
+window.addEventListener("beforeinstallprompt", e => { e.preventDefault(); installEvt = e; if (S) renderHello(); });
+function renderHello() {
+  const now = new Date(), first = (S.me.display || "").split(" ")[0];
+  const day = now.toLocaleDateString("en-GB", { weekday: "long" });
+  const g = S.club.game, showClub = S.flags.clubOpen || S.me.organiser;
+  const cd = showClub ? countdownText(g, now) : "";
+  const isMatchday = cd.startsWith("It's matchday");
+  let html = '<div class="hello-row"><div><p class="hello-hi">' + esc(greeting(now)) + ", " + esc(first) + '</p>' +
+    '<p class="hello-sub">' + (isMatchday ? "Boots on. See you on the pitch." : "Happy " + esc(day) + ".") + '</p></div>' +
+    (cd ? '<span class="countdown' + (isMatchday ? " live" : "") + '">' + esc(cd) + '</span>' : "") + '</div>';
+  if (S.me.birthday) html += '<div class="bday me">' + ICON.trophy + '<p><b>Happy birthday, ' + esc(first) + '!</b> From everyone at Afrobeats FC.</p></div>';
+  const others = (S.birthdays || []).filter(n => n !== S.me.display);
+  if (others.length) html += '<div class="bday"><span class="cake" aria-hidden="true"></span><p>It\'s <b>' + others.map(esc).join("</b> and <b>") + '</b>\'s birthday today. Wish them well in the group!</p></div>';
+  if (S.me.organiser && !S.flags.clubOpen) html += '<div class="org-note"><p>Members only see <b>Awards</b> right now. To open everything, tick <b>Show club features</b> in the Settings tab of the Google Sheet.</p></div>';
+  const standalone = matchMedia("(display-mode: standalone)").matches || navigator.standalone;
+  const ios = /iphone|ipad|ipod/i.test(navigator.userAgent) && !/crios|fxios/i.test(navigator.userAgent);
+  if (!standalone && !store.get("abfc-install-dismissed") && (installEvt || ios)) {
+    html += '<div class="install"><img class="crest-img" src="' + $("crestSrc").href + '" alt="" width="34" height="50"><p><b>Add Afrobeats FC to your home screen</b><br>' +
+      (installEvt ? "Open it like an app, full screen." : 'Tap <b>Share</b>, then <b>Add to Home Screen</b>.') + '</p>' +
+      (installEvt ? '<button class="btn btn-gold btn-sm" type="button" id="installBtn">Install</button>' : "") +
+      '<button class="icon-btn" type="button" id="installX" aria-label="Dismiss">' + ICON_X + '</button></div>';
+  }
+  $("hello").innerHTML = html;
+  const ib = $("installBtn"); if (ib) ib.onclick = async () => { installEvt.prompt(); await installEvt.userChoice; installEvt = null; renderHello(); };
+  const ix = $("installX"); if (ix) ix.onclick = () => { store.set("abfc-install-dismissed", true); renderHello(); };
+  if (S.me.birthday && !bdayCelebrated) { bdayCelebrated = true; confetti(); }
+}
+setInterval(() => { if (S && $("app").classList.contains("on")) renderHello(); }, 60000);
+
+/* ================= JOIN (public, from the QR code) ================= */
+function openJoin() {
+  showScreen("joinScreen");
+  $("joinFields").hidden = false; $("joinDone").hidden = true; $("joinMsg").textContent = "";
+}
+$("joinForm").addEventListener("submit", async e => {
+  e.preventDefault();
+  const name = clean($("joinName").value), phone = normPhone($("joinPhone").value), msg = t => $("joinMsg").textContent = t;
+  if (name.length < 2) { msg("Enter your name."); $("joinName").focus(); return; }
+  if (!phone) { msg("Enter your full phone number, e.g. 07123 456789."); $("joinPhone").focus(); return; }
+  if (TEST_MODE) { msg("Test mode: no Google Sheet is connected."); return; }
+  const b = $("joinBtn"); b.disabled = true; b.textContent = "Sending…";
+  try {
+    const out = await (await fetch(SCRIPT_URL, { method: "POST", body: JSON.stringify({ action: "requestJoin", name, phone: clean($("joinPhone").value) }) })).json();
+    if (!out.ok) { msg(out.error); return; }
+    $("joinFields").hidden = true; $("joinDone").hidden = false;
+    $("joinDoneTitle").textContent = out.already ? "You're on the list" : "Request sent";
+    $("joinDoneText").textContent = out.already ? "Your request is already waiting. An organiser will approve you soon." : "Thanks, " + name.split(" ")[0] + "! An organiser will approve you shortly. Then sign in with this number.";
+  } catch (err) { msg("Couldn't reach the club sheet. Check your connection and try again."); }
+  finally { b.disabled = false; b.textContent = "Send my request"; }
+});
+$("joinDone").querySelector("a").addEventListener("click", e => { e.preventDefault(); history.replaceState(null, "", location.pathname); token ? startApp() : showScreen("gate"); });
+
+/* ================= ORGANISER: join requests + QR ================= */
+function renderJoinRequests() {
+  const list = S.joinRequests || [];
+  $("joinCount").textContent = list.length ? String(list.length) : "";
+  $("joinList").innerHTML = list.length ? '<ol class="plist">' + list.map(r =>
+    '<li><span class="nm">' + esc(r.name) + '<small>' + esc(r.phone) + '</small></span><span class="acts">' +
+    '<button type="button" class="btn btn-gold btn-sm" data-act="approveJoin" data-id="' + esc(r.id) + '">Approve</button>' +
+    '<button type="button" class="icon-btn" data-act="declineJoin" data-id="' + esc(r.id) + '" aria-label="Decline ' + esc(r.name) + '">' + ICON_X + '</button></span></li>').join("") + '</ol>'
+    : '<p class="empty">No requests waiting.</p>';
+}
+document.addEventListener("click", e => {
+  const b = e.target.closest("[data-act=approveJoin],[data-act=declineJoin]"); if (!b) return;
+  e.stopImmediatePropagation();
+  if (b.dataset.act === "approveJoin") act("approveJoin", { id: b.dataset.id }, "Approved. They can sign in now.", b);
+  else act("declineJoin", { id: b.dataset.id }, "Request declined.", b);
+}, true);
+const JOIN_URL = location.origin + location.pathname + "#join";
+let qrLib = null;
+function loadQR() {
+  if (qrLib) return qrLib;
+  qrLib = new Promise((res, rej) => { const sc = document.createElement("script"); sc.src = "https://cdnjs.cloudflare.com/ajax/libs/qrcode-generator/1.4.4/qrcode.min.js"; sc.onload = () => res(window.qrcode); sc.onerror = rej; document.head.appendChild(sc); });
+  return qrLib;
+}
+function qrMatrix(q) { const n = q.getModuleCount(), m = []; for (let r = 0; r < n; r++) { const row = []; for (let c = 0; c < n; c++) row.push(q.isDark(r, c)); m.push(row); } return m; }
+let qrDone = false;
+async function renderQR() {
+  if (qrDone) return;
+  try {
+    const qrcode = await loadQR(); const q = qrcode(0, "M"); q.addData(JOIN_URL); q.make();
+    const m = qrMatrix(q), n = m.length;
+    let path = ""; m.forEach((row, r) => row.forEach((d, c) => { if (d) path += "M" + c + " " + r + "h1v1h-1z"; }));
+    $("qrBox").innerHTML = '<svg viewBox="-2 -2 ' + (n + 4) + ' ' + (n + 4) + '" shape-rendering="crispEdges" role="img" aria-label="QR code linking to the join page"><rect x="-2" y="-2" width="' + (n + 4) + '" height="' + (n + 4) + '" fill="#fff"/><path d="' + path + '" fill="#07110c"/></svg>';
+    qrDone = true;
+  } catch (e) { $("qrBox").innerHTML = '<p class="muted-note">QR code couldn\'t load. Share this link instead: ' + esc(JOIN_URL) + '</p>'; }
+}
+$("qrCopy").addEventListener("click", async () => { try { await navigator.clipboard.writeText(JOIN_URL); toast("Join link copied."); } catch (e) { toast(JOIN_URL); } });
+$("qrDownload").addEventListener("click", async () => {
+  try {
+    const qrcode = await loadQR(); const q = qrcode(0, "M"); q.addData(JOIN_URL); q.make();
+    const m = qrMatrix(q), n = m.length, cell = 16, pad = 4 * cell, W = n * cell + pad * 2, H = W + 220;
+    const cv = document.createElement("canvas"); cv.width = W; cv.height = H; const ctx = cv.getContext("2d");
+    ctx.fillStyle = "#07110c"; ctx.fillRect(0, 0, W, H);
+    ctx.fillStyle = "#ffffff"; ctx.fillRect(pad / 2, pad / 2, W - pad, W - pad);
+    ctx.fillStyle = "#07110c"; m.forEach((row, r) => row.forEach((d, c) => { if (d) ctx.fillRect(pad + c * cell, pad + r * cell, cell, cell); }));
+    const img = new Image(); img.src = $("crestSrc").href; await img.decode().catch(() => {});
+    const ih = 150, iw = img.width ? img.width * ih / img.height : 0; if (iw) ctx.drawImage(img, 40, W + 35, iw, ih);
+    ctx.fillStyle = "#f2c14e"; ctx.font = "800 54px Unbounded, Arial Black, sans-serif"; ctx.fillText("Scan to join", 70 + iw, W + 100);
+    ctx.fillStyle = "#f3f6f2"; ctx.font = "700 40px Manrope, Arial, sans-serif"; ctx.fillText("Afrobeats FC", 70 + iw, W + 160);
+    const a = document.createElement("a"); a.href = cv.toDataURL("image/png"); a.download = "afrobeats-fc-join-qr.png"; document.body.appendChild(a); a.click(); a.remove();
+  } catch (e) { toast("Couldn't make the QR image. Try again.", true); }
+});
+
+/* ================= FOOTBALL ================= */
+const COMP_NAMES = { PL: "Premier League", CL: "Champions League", PD: "La Liga", SA: "Serie A", BL1: "Bundesliga", FL1: "Ligue 1", ELC: "Championship", DED: "Eredivisie", PPL: "Primeira Liga", BSA: "Brasileirão", EC: "Euros", WC: "World Cup" };
+const COMP_ORDER = ["PL", "CL", "PD", "SA", "BL1", "FL1", "ELC", "DED", "PPL", "BSA", "EC", "WC"];
+let fbDay = 0, fbComp = "ALL", fbData = {}, fbTimer = null;
+function isoDay(offset) { const d = new Date(); d.setDate(d.getDate() + offset); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
+function renderFbDays() {
+  const label = o => o === 0 ? "Today" : o === -1 ? "Yesterday" : o === 1 ? "Tomorrow" : fmtDate(isoDay(o), { weekday: "short", day: "numeric" });
+  $("fbDays").innerHTML = [-1, 0, 1, 2, 3, 4, 5].map(o => '<button type="button" role="tab" aria-selected="' + (o === fbDay) + '" class="' + (o === fbDay ? "on" : "") + '" data-day="' + o + '">' + esc(label(o)) + '</button>').join("");
+}
+$("fbDays").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; fbDay = Number(b.dataset.day); fbComp = "ALL"; loadFootball(); });
+$("fbComps").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; fbComp = b.dataset.comp; renderFootball(); });
+async function loadFootball() {
+  renderFbDays();
+  clearTimeout(fbTimer);
+  const day = isoDay(fbDay);
+  if (!fbData[day]) $("fbBox").innerHTML = '<p class="loading">Loading scores…</p>';
+  else renderFootball();
+  try {
+    const out = await api("football", { from: day, to: day });
+    fbData[day] = out;
+    renderFootball();
+    if (!$("fbTable").dataset.loaded && out.configured && !out.error) loadTable($("fbTablePick").value);
+  } catch (e) { $("fbBox").innerHTML = '<div class="card"><p class="empty">' + esc(e.message) + '</p></div>'; }
+  if (tab === "football" && fbDay === 0) fbTimer = setTimeout(() => { if (tab === "football" && !document.hidden) loadFootball(); }, 90000);
+}
+function statusCell(m) {
+  const t = new Date(m.utc), time = t.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
+  if (m.status === "IN_PLAY") return '<span class="fb-live">' + (m.minute ? esc(m.minute) + "'" : "LIVE") + '</span>';
+  if (m.status === "PAUSED") return '<span class="fb-live">HT</span>';
+  if (m.status === "FINISHED" || m.status === "AWARDED") return '<span class="fb-ft">FT</span>';
+  if (m.status === "POSTPONED") return '<span class="fb-ft">PP</span>';
+  if (m.status === "CANCELLED" || m.status === "SUSPENDED") return '<span class="fb-ft">' + esc(m.status.slice(0, 4)) + '</span>';
+  return '<span class="fb-time">' + time + '</span>';
+}
+function crest(url) { return url ? '<img class="fb-crest" src="' + esc(url) + '" alt="" loading="lazy" width="22" height="22">' : '<span class="fb-crest blank"></span>'; }
+function renderFootball() {
+  const out = fbData[isoDay(fbDay)];
+  if (!out) return;
+  if (!out.configured) {
+    $("fbComps").innerHTML = "";
+    $("fbBox").innerHTML = '<div class="card"><p class="empty">' + (S.me.organiser
+      ? 'Football scores need a free key. Register at football-data.org, copy the key from your email, and paste it into the <b>Football data key</b> row of the Settings tab in the Google Sheet.'
+      : "Football scores are coming soon.") + '</p></div>';
+    return;
+  }
+  if (out.error) { $("fbBox").innerHTML = '<div class="card"><p class="empty">' + esc(out.error) + '</p></div>'; return; }
+  const ms = (out.matches || []).slice().sort((a, b) => COMP_ORDER.indexOf(a.comp) - COMP_ORDER.indexOf(b.comp) || a.utc.localeCompare(b.utc));
+  const comps = COMP_ORDER.filter(c => ms.some(m => m.comp === c));
+  const liveN = ms.filter(m => m.status === "IN_PLAY" || m.status === "PAUSED").length;
+  $("fbComps").innerHTML = comps.length > 1 ? ['ALL'].concat(comps).map(c => '<button type="button" class="' + (c === fbComp ? "on" : "") + '" data-comp="' + c + '">' + (c === "ALL" ? "All" + (liveN ? ' <span class="fb-dot"></span>' : "") : esc(COMP_NAMES[c] || c)) + '</button>').join("") : "";
+  const shown = ms.filter(m => fbComp === "ALL" || m.comp === fbComp);
+  if (!shown.length) { $("fbBox").innerHTML = '<div class="card"><p class="empty">No matches in these leagues ' + (fbDay === 0 ? "today" : "on this day") + '.</p></div>'; return; }
+  const groups = {}; shown.forEach(m => (groups[m.comp] = groups[m.comp] || []).push(m));
+  $("fbBox").innerHTML = (out.stale ? '<p class="muted-note">Showing the last scores we had. Live updates are busy.</p>' : "") + Object.keys(groups).map(c =>
+    '<div class="card fb-comp"><h2>' + (groups[c][0].compEmblem ? '<img class="fb-emblem" src="' + esc(groups[c][0].compEmblem) + '" alt="" width="22" height="22">' : "") + esc(COMP_NAMES[c] || groups[c][0].compName) + '</h2><div class="fb-list">' +
+    groups[c].map(m => {
+      const live = m.status === "IN_PLAY" || m.status === "PAUSED", done = m.hs !== null && m.hs !== undefined;
+      const hw = done && m.hs > m.as, aw = done && m.as > m.hs;
+      return '<div class="fb-row' + (live ? " is-live" : "") + '"><div class="fb-st">' + statusCell(m) + '</div>' +
+        '<div class="fb-team home' + (hw ? " win" : "") + '"><span>' + esc(m.home) + '</span>' + crest(m.homeCrest) + '</div>' +
+        '<div class="fb-score">' + (done ? m.hs + '<i>–</i>' + m.as : '<i>v</i>') + '</div>' +
+        '<div class="fb-team away' + (aw ? " win" : "") + '">' + crest(m.awayCrest) + '<span>' + esc(m.away) + '</span></div></div>';
+    }).join("") + '</div></div>').join("");
+}
+async function loadTable(code) {
+  $("fbTable").innerHTML = '<p class="loading">Loading table…</p>';
+  try {
+    const out = await api("football", { kind: "table", code });
+    if (!out.configured) { $("fbTable").innerHTML = '<p class="empty">Football data isn\'t set up yet.</p>'; return; }
+    if (out.error) { $("fbTable").innerHTML = '<p class="empty">' + esc(out.error) + '</p>'; return; }
+    $("fbTable").dataset.loaded = "1";
+    const t = out.table.table;
+    $("fbTable").innerHTML = '<div class="table-wrap"><table class="reg fb-tbl"><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody>' +
+      t.map(r => '<tr><td>' + r.pos + '</td><td class="fb-tteam">' + crest(r.crest) + esc(r.team) + '</td><td>' + r.played + '</td><td>' + r.won + '</td><td>' + r.draw + '</td><td>' + r.lost + '</td><td>' + (r.gd > 0 ? "+" : "") + r.gd + '</td><td><b>' + r.pts + '</b></td></tr>').join("") + '</tbody></table></div>';
+  } catch (e) { $("fbTable").innerHTML = '<p class="empty">' + esc(e.message) + '</p>'; }
+}
+$("fbTablePick").addEventListener("change", e => loadTable(e.target.value));
+
+/* ---------- keep the page fresh ---------- */
+setInterval(() => {
+  if (!token || !S || document.hidden) return;
+  const a = document.activeElement;
+  if (a && /INPUT|TEXTAREA|SELECT/.test(a.tagName)) return;
+  if (!$("review").hidden) return;
+  api("state").catch(() => {});
+}, 60000);
+
+/* ---------- start ---------- */
+if (TEST_MODE) $("setupNotice").hidden = false;
+if (location.hash === "#join") openJoin();
+else if (location.hash === "#winners" && !token) openPublicWinners();
+else if (token) startApp();
+else showScreen("gate");
+if ("serviceWorker" in navigator && location.protocol === "https:") navigator.serviceWorker.register("sw.js").catch(() => {});
+</script>
+</body>
+</html>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="theme-color" content="#07110c">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Afrobeats FC">
+<title>Afrobeats FC</title>
+<link rel="icon" type="image/webp" id="crestSrc" href="data:image/webp;base64,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">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Unbounded:wght@500;700;800&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<style>
+
+/* Layout idea: matchday programme meets app. Phones get one column with a sticky progress bar and award chips;
+   laptops get a fixed sidebar (crest, progress ring, award list) beside a wide ballot. Colours come from the crest. */
+:root {
+  --bg: #07110c;
+  --panel: rgba(18, 34, 26, 0.72);
+  --panel-solid: #11211a;
+  --line: rgba(255, 255, 255, 0.09);
+  --line-strong: rgba(255, 255, 255, 0.18);
+  --text: #f3f6f2;
+  --muted: #93a79b;
+  --gold: #f2c14e;
+  --gold-deep: #c9952a;
+  --on-gold: #1b1404;
+  --green: #1f9d55;
+  --red: #d94b3f;
+  --bad: #ff8a7a;
+  --display: "Unbounded", "Arial Black", system-ui, sans-serif;
+  --body: "Manrope", system-ui, -apple-system, "Segoe UI", Roboto, sans-serif;
+  --radius: 18px;
+  --ease: cubic-bezier(.2,.8,.2,1);
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+html { scroll-behavior: smooth; }
+html, body { background: var(--bg); color: var(--text); }
+body { font-family: var(--body); font-size: 16px; line-height: 1.5; min-height: 100vh; overflow-x: hidden; }
+img { max-width: 100%; display: block; }
+button { font: inherit; cursor: pointer; border: 0; color: inherit; background: none; }
+:focus-visible { outline: 3px solid var(--gold); outline-offset: 3px; border-radius: 10px; }
+
+/* Ambient background: floodlight glows in crest colours */
+.glow { position: fixed; inset: 0; pointer-events: none; z-index: 0; overflow: hidden; }
+.glow::before, .glow::after { content: ""; position: absolute; border-radius: 50%; filter: blur(90px); opacity: .5; }
+.glow::before { width: 60vw; height: 60vw; left: -20vw; top: -25vw; background: radial-gradient(circle, rgba(31,157,85,.55), transparent 65%); }
+.glow::after  { width: 50vw; height: 50vw; right: -18vw; top: 30vh; background: radial-gradient(circle, rgba(242,193,78,.28), transparent 65%); }
+
+/* The crest's stripe: green, gold, red, black */
+.stripe { height: 4px; border-radius: 4px; background: linear-gradient(90deg, var(--green) 0 30%, var(--gold) 30% 55%, var(--red) 55% 80%, #000 80% 100%); }
+
+.screen { display: none; position: relative; z-index: 1; }
+.screen.on { display: block; animation: rise .45s var(--ease); }
+@keyframes rise { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: none; } }
+
+.eyebrow { font-weight: 800; font-size: 12px; letter-spacing: .16em; text-transform: uppercase; color: var(--gold); }
+h1, h2, h3 { font-family: var(--display); font-weight: 700; letter-spacing: -.01em; text-wrap: balance; }
+.muted { color: var(--muted); }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+  min-height: 54px; padding: 0 22px; border-radius: 14px; font-weight: 800; font-size: 16px;
+  text-decoration: none;
+  transition: transform .15s var(--ease), box-shadow .2s, opacity .2s;
+}
+.btn:active { transform: scale(.98); }
+.btn-gold { background: linear-gradient(180deg, #f6cd66, var(--gold-deep)); color: var(--on-gold); box-shadow: 0 10px 30px -10px rgba(242,193,78,.6); }
+.btn-gold:hover { box-shadow: 0 14px 36px -10px rgba(242,193,78,.75); }
+.btn-gold:disabled { opacity: .55; cursor: default; box-shadow: none; }
+.btn-ghost { border: 1.5px solid var(--line-strong); color: var(--text); }
+.btn-ghost:hover { border-color: var(--gold); }
+.btn-wide { width: 100%; }
+.btn svg { width: 18px; height: 18px; }
+
+.field { display: grid; gap: 8px; }
+.field label { font-weight: 700; font-size: 15px; }
+.field .hint { font-weight: 500; font-size: 13px; color: var(--muted); }
+.input {
+  width: 100%; font: inherit; font-size: 17px; color: var(--text);
+  background: rgba(0,0,0,.28); border: 1.5px solid var(--line-strong); border-radius: 14px;
+  padding: 14px 16px; transition: border-color .2s, box-shadow .2s;
+}
+.input::placeholder { color: #61766a; }
+.input:focus { outline: none; border-color: var(--gold); box-shadow: 0 0 0 4px rgba(242,193,78,.16); }
+.invalid .input, .input.invalid { border-color: var(--bad); }
+
+.notice { padding: 12px 14px; border-radius: 12px; border: 1px dashed rgba(242,193,78,.6); background: rgba(242,193,78,.07); font-size: 14px; }
+.notice code { color: var(--gold); }
+.msg { color: var(--bad); font-size: 14px; font-weight: 600; min-height: 20px; }
+
+/* ================= GATE ================= */
+.gate { min-height: 100vh; display: grid; align-items: center; padding: max(28px, env(safe-area-inset-top)) 18px 40px; max-width: 1120px; margin: 0 auto; gap: 28px; }
+.gate-hero { display: grid; gap: 16px; justify-items: start; }
+.gate-crest { width: 120px; filter: drop-shadow(0 18px 30px rgba(0,0,0,.55)); }
+.gate-hero h1 { font-size: clamp(34px, 8vw, 64px); line-height: 1.02; }
+.gate-hero h1 span { color: var(--gold); }
+.gate-hero .lede { color: var(--muted); max-width: 44ch; font-size: 17px; }
+.closes { display: inline-flex; align-items: center; gap: 8px; font-weight: 700; color: var(--gold); font-size: 15px; }
+.closes::before { content: ""; width: 8px; height: 8px; border-radius: 50%; background: var(--gold); box-shadow: 0 0 0 4px rgba(242,193,78,.2); }
+.closes[hidden] { display: none; }
+.award-pills { display: none; flex-wrap: wrap; gap: 8px; max-width: 520px; }
+.award-pills span { font-size: 13px; font-weight: 700; padding: 6px 12px; border-radius: 999px; border: 1px solid var(--line-strong); color: #cfdad2; background: rgba(255,255,255,.03); }
+.gate-card { background: var(--panel); border: 1px solid var(--line); border-radius: 24px; padding: 26px 22px; display: grid; gap: 18px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 30px 80px -30px rgba(0,0,0,.7); }
+.gate-card h2 { font-size: 20px; }
+.privacy { font-size: 13px; color: var(--muted); display: flex; gap: 8px; align-items: flex-start; }
+.privacy svg { flex: none; width: 16px; height: 16px; margin-top: 2px; color: var(--green); }
+@media (min-width: 900px) {
+  .gate { grid-template-columns: 1.15fr .85fr; gap: 64px; padding: 48px 40px; }
+  .gate-crest { width: 170px; }
+  .award-pills { display: flex; }
+  .gate-card { padding: 34px 30px; }
+}
+
+/* ================= BALLOT ================= */
+.shell { max-width: 1240px; margin: 0 auto; padding: 0 16px 140px; }
+.side { position: sticky; top: 0; z-index: 20; margin: 0 -16px; padding: max(10px, env(safe-area-inset-top)) 16px 10px; background: rgba(7,17,12,.86); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); }
+.side-brand { display: flex; align-items: center; gap: 12px; }
+.side-brand img { width: 34px; }
+.side-brand .t { display: grid; line-height: 1.2; min-width: 0; }
+.side-brand strong { font-family: var(--display); font-size: 14px; }
+.side-brand small { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.ring { margin-left: auto; position: relative; width: 46px; height: 46px; flex: none; }
+.ring svg { width: 100%; height: 100%; transform: rotate(-90deg); }
+.ring circle { fill: none; stroke-width: 5; }
+.ring .track { stroke: rgba(255,255,255,.1); }
+.ring .fill { stroke: var(--gold); stroke-linecap: round; transition: stroke-dashoffset .4s var(--ease); }
+.ring b { position: absolute; inset: 0; display: grid; place-items: center; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.nav { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin: 10px -16px 0; padding: 0 16px 2px; scroll-snap-type: x proximity; }
+.nav::-webkit-scrollbar { display: none; }
+.nav button {
+  flex: none; scroll-snap-align: start; display: flex; align-items: center; gap: 8px;
+  padding: 7px 12px 7px 8px; border-radius: 999px; border: 1px solid var(--line-strong);
+  font-size: 13px; font-weight: 700; color: #cfdad2; transition: background .2s, border-color .2s;
+}
+.nav .dot { width: 20px; height: 20px; border-radius: 50%; display: grid; place-items: center; font-size: 10px; font-weight: 800; background: rgba(255,255,255,.08); font-variant-numeric: tabular-nums; }
+.nav button.done { border-color: rgba(242,193,78,.45); }
+.nav button.done .dot { background: var(--gold); color: var(--on-gold); }
+.nav .pick { display: none; }
+.side-review { display: none; }
+
+.main { display: grid; gap: 34px; padding-top: 22px; }
+.ballot-head { display: grid; gap: 8px; }
+.ballot-head h1 { font-size: clamp(26px, 6vw, 40px); }
+.ballot-head p { color: var(--muted); max-width: 60ch; }
+.group { display: grid; gap: 14px; }
+.group-title { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.group-title h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .1em; }
+.group-title span { color: var(--muted); font-size: 14px; }
+
+.award {
+  scroll-margin-top: 130px;
+  background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius);
+  padding: 18px; display: grid; gap: 14px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+  transition: border-color .25s, box-shadow .25s;
+}
+.award.done { border-color: rgba(242,193,78,.35); }
+.award.invalid { border-color: var(--bad); box-shadow: 0 0 0 3px rgba(255,138,122,.12); }
+.award.flash { box-shadow: 0 0 0 3px rgba(242,193,78,.35); }
+.award-head { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; }
+.award-num { font-family: var(--display); font-size: 13px; font-weight: 800; color: var(--gold); width: 38px; height: 38px; border-radius: 12px; display: grid; place-items: center; background: rgba(242,193,78,.1); border: 1px solid rgba(242,193,78,.3); font-variant-numeric: tabular-nums; }
+.award.done .award-num { background: var(--gold); color: var(--on-gold); border-color: var(--gold); }
+.award-title { display: grid; min-width: 0; }
+.award-title h3 { font-size: 17px; line-height: 1.25; }
+.award-title .sub { color: var(--muted); font-size: 13px; font-weight: 600; }
+.award-pick { font-size: 13px; font-weight: 800; color: var(--on-gold); background: var(--gold); padding: 5px 11px; border-radius: 999px; max-width: 200px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.award-pick:empty { display: none; }
+
+.search { position: relative; }
+.search svg { position: absolute; left: 14px; top: 50%; width: 18px; height: 18px; transform: translateY(-50%); color: var(--muted); pointer-events: none; }
+.search .input { padding: 11px 14px 11px 42px; font-size: 15px; border-radius: 12px; }
+
+.choices { display: grid; gap: 8px; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.choices.long { grid-template-columns: 1fr; }
+.choice { position: relative; display: block; cursor: pointer; }
+.choice input { position: absolute; opacity: 0; pointer-events: none; }
+.choice span {
+  display: flex; align-items: center; gap: 10px; min-height: 50px; height: 100%;
+  padding: 10px 12px; border-radius: 12px; border: 1.5px solid var(--line-strong);
+  background: rgba(0,0,0,.22); font-weight: 600; font-size: 15px; line-height: 1.3;
+  transition: border-color .15s, background .15s, transform .15s var(--ease), color .15s;
+}
+.choice span::before {
+  content: ""; flex: none; width: 18px; height: 18px; border-radius: 50%; border: 2px solid #6c8276;
+  transition: border-color .15s, background .15s, box-shadow .15s;
+}
+.choice:hover span { border-color: rgba(242,193,78,.6); transform: translateY(-1px); }
+.choice input:focus-visible + span { outline: 3px solid var(--gold); outline-offset: 2px; }
+.choice input:checked + span { border-color: var(--gold); background: linear-gradient(180deg, rgba(242,193,78,.2), rgba(242,193,78,.08)); color: #fff; }
+.choice input:checked + span::before { border-color: var(--gold); background: var(--gold); box-shadow: inset 0 0 0 3px var(--panel-solid); }
+.choice.other span { border-style: dashed; color: var(--muted); }
+.choice.other input:checked + span { color: #fff; }
+.choices:not(.long) .choice.other { grid-column: 1 / -1; }
+.choice[hidden] { display: none; }
+.no-match { color: var(--muted); font-size: 14px; }
+.no-match[hidden] { display: none; }
+
+.dock {
+  position: fixed; left: 0; right: 0; bottom: 0; z-index: 30;
+  padding: 14px 16px calc(14px + env(safe-area-inset-bottom));
+  background: linear-gradient(180deg, rgba(7,17,12,0), rgba(7,17,12,.92) 30%);
+}
+.dock .msg { text-align: center; margin-bottom: 6px; }
+.dock .btn { width: 100%; max-width: 560px; margin: 0 auto; display: flex; }
+.dock .btn.ready { animation: pulse 1.6s var(--ease) 2; }
+@keyframes pulse { 50% { box-shadow: 0 0 0 10px rgba(242,193,78,0); transform: scale(1.02); } }
+
+@media (min-width: 560px) {
+  .choices { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .choices.long { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}
+@media (min-width: 960px) {
+  .shell { display: grid; grid-template-columns: 300px 1fr; gap: 40px; padding: 0 32px 80px; }
+  .side {
+    position: sticky; top: 24px; align-self: start; margin: 24px 0 0; padding: 22px;
+    border: 1px solid var(--line); border-radius: 24px; background: var(--panel);
+    display: grid; gap: 18px; max-height: calc(100vh - 48px); overflow: auto;
+  }
+  .side-brand img { width: 52px; }
+  .side-brand strong { font-size: 16px; }
+  .ring { width: 58px; height: 58px; }
+  .ring b { font-size: 14px; }
+  .nav { flex-direction: column; overflow: visible; margin: 0; padding: 0; gap: 4px; }
+  .nav button { width: 100%; border: 0; border-radius: 12px; padding: 9px 10px; text-align: left; align-items: center; }
+  .nav button:hover { background: rgba(255,255,255,.05); }
+  .nav button.current { background: rgba(242,193,78,.1); }
+  .nav .lbl { display: grid; min-width: 0; }
+  .nav .pick { display: block; font-size: 12px; font-weight: 600; color: var(--muted); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+  .nav button.done .pick { color: var(--gold); }
+  .side-review { display: flex; }
+  .main { padding-top: 40px; }
+  .award { padding: 22px 24px; scroll-margin-top: 28px; }
+  .choices { grid-template-columns: repeat(4, minmax(0, 1fr)); }
+  .choices.long { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dock { display: none; }
+  .award-pick { max-width: 280px; }
+}
+
+/* ================= REVIEW + DONE ================= */
+.center { min-height: 100vh; display: grid; place-items: center; padding: max(28px, env(safe-area-inset-top)) 16px 40px; }
+.sheet { width: 100%; max-width: 620px; background: var(--panel); border: 1px solid var(--line); border-radius: 26px; padding: 26px 20px; display: grid; gap: 18px; backdrop-filter: blur(16px); -webkit-backdrop-filter: blur(16px); box-shadow: 0 30px 80px -30px rgba(0,0,0,.7); }
+.sheet h1 { font-size: clamp(24px, 6vw, 32px); }
+.review-list { list-style: none; display: grid; border: 1px solid var(--line); border-radius: 16px; overflow: hidden; }
+.review-list li { display: grid; grid-template-columns: 1fr auto; gap: 4px 12px; align-items: center; padding: 12px 14px; border-top: 1px solid var(--line); background: rgba(0,0,0,.18); }
+.review-list li:first-child { border-top: 0; }
+.review-list .k { color: var(--muted); font-size: 13px; font-weight: 700; }
+.review-list .v { font-weight: 700; grid-column: 1; }
+.review-list button { grid-row: 1 / span 2; grid-column: 2; color: var(--gold); font-weight: 800; font-size: 14px; padding: 8px; }
+.sheet-actions { display: grid; gap: 10px; }
+@media (min-width: 560px) { .sheet { padding: 34px 32px; } .sheet-actions { grid-template-columns: 1fr 1.4fr; } .sheet-actions .btn-gold { order: 2; } }
+
+.done-crest { width: 130px; margin: 0 auto; filter: drop-shadow(0 18px 30px rgba(0,0,0,.55)); animation: pop .7s var(--ease); }
+@keyframes pop { from { transform: scale(.7) rotate(-6deg); opacity: 0; } to { transform: none; opacity: 1; } }
+.done-sheet { text-align: center; justify-items: center; }
+.done-sheet p { color: var(--muted); max-width: 40ch; }
+
+/* ================= WINNERS ================= */
+.winners-link[hidden] { display: none; }
+.winners-link { display: inline-flex; }
+.wn { max-width: 1180px; margin: 0 auto; padding: max(28px, env(safe-area-inset-top)) 16px 64px; display: grid; gap: 28px; }
+.wn-head { display: grid; justify-items: center; text-align: center; gap: 12px; }
+.wn-head img { width: 96px; filter: drop-shadow(0 14px 26px rgba(0,0,0,.55)); }
+.wn-head h1 { font-size: clamp(30px, 7vw, 56px); line-height: 1.05; }
+.wn-head h1 span { color: var(--gold); }
+.wn-head p { color: var(--muted); max-width: 52ch; }
+.wn-grid { display: grid; gap: 18px; grid-template-columns: 1fr; }
+@media (min-width: 820px) { .wn-grid { grid-template-columns: 1fr 1fr; } .wn-card.wide { grid-column: 1 / -1; } }
+.wn-card { background: var(--panel); border: 1px solid var(--line); border-radius: 22px; padding: 20px 18px 18px; display: grid; gap: 16px; backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px); position: relative; overflow: hidden; }
+.wn-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, var(--green) 0 30%, var(--gold) 30% 55%, var(--red) 55% 80%, #000 80% 100%); }
+.wn-card h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .1em; color: #dfe8e2; }
+.podium { display: grid; grid-template-columns: 1fr 1.15fr 1fr; align-items: end; gap: 10px; min-height: 230px; }
+.pod { display: grid; justify-items: center; gap: 8px; text-align: center; min-width: 0; }
+.pod .who { font-weight: 800; font-size: 15px; line-height: 1.2; overflow-wrap: anywhere; }
+.pod .votes { font-size: 12px; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.pod .medal { width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-weight: 800; font-size: 15px; color: #1b1404; box-shadow: inset 0 -3px 0 rgba(0,0,0,.18), 0 6px 16px -6px rgba(0,0,0,.6); }
+.pod .block { width: 100%; border-radius: 12px 12px 4px 4px; display: grid; place-items: start center; padding-top: 10px; font-family: var(--display); font-weight: 800; font-size: 13px; color: rgba(0,0,0,.55); transform-origin: bottom; animation: grow .8s var(--ease) both; }
+.p1 .medal, .p1 .block { background: linear-gradient(180deg, #ffe08a, #e2a92b); }
+.p2 .medal, .p2 .block { background: linear-gradient(180deg, #f1f4f6, #a9b4bc); }
+.p3 .medal, .p3 .block { background: linear-gradient(180deg, #f2b98a, #b8733e); }
+.p1 .block { height: 120px; animation-delay: .35s; }
+.p2 .block { height: 84px; animation-delay: .15s; }
+.p3 .block { height: 60px; animation-delay: .5s; }
+.p1 .who { font-size: 18px; color: #fff; }
+.pod.empty { opacity: .35; }
+@keyframes grow { from { transform: scaleY(0); } to { transform: none; } }
+.congrats { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; background: linear-gradient(90deg, rgba(242,193,78,.18), rgba(242,193,78,.04)); border: 1px solid rgba(242,193,78,.35); }
+.congrats svg { width: 22px; height: 22px; flex: none; color: var(--gold); }
+.congrats p { font-weight: 700; font-size: 15px; }
+.congrats b { color: var(--gold); }
+.ranks { list-style: none; display: grid; gap: 8px; }
+.ranks li { display: grid; grid-template-columns: 40px 1fr auto; gap: 12px; align-items: center; padding: 12px; border-radius: 14px; border: 1px solid var(--line-strong); background: rgba(0,0,0,.2); }
+.ranks li.p1 { border-color: rgba(242,193,78,.6); background: linear-gradient(90deg, rgba(242,193,78,.16), rgba(0,0,0,.2)); }
+.ranks .medal { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; font-family: var(--display); font-weight: 800; color: #1b1404; }
+.ranks .who { font-weight: 700; line-height: 1.35; }
+.ranks .votes { font-size: 12px; color: var(--muted); font-weight: 700; white-space: nowrap; }
+.wn-empty { text-align: center; color: var(--muted); padding: 30px 0; }
+.wn-actions { display: flex; justify-content: center; gap: 10px; flex-wrap: wrap; }
+#confetti { position: fixed; inset: 0; pointer-events: none; z-index: 50; }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
+}
+
+/* ================= CLUB APP SHELL ================= */
+[hidden] { display: none !important; }
+/* Layout idea: a club programme on your phone — sticky top bar with swipeable section tabs;
+   on laptops the tabs become a left rail beside a wide content column. */
+.app { display: none; position: relative; z-index: 1; min-height: 100vh; }
+.app.on { display: block; }
+.topbar { position: sticky; top: 0; z-index: 30; background: rgba(7,17,12,.88); backdrop-filter: blur(14px); -webkit-backdrop-filter: blur(14px); border-bottom: 1px solid var(--line); padding: max(10px, env(safe-area-inset-top)) 16px 0; }
+.topbar-row { display: flex; align-items: center; gap: 12px; max-width: 1240px; margin: 0 auto; }
+.topbar-row img { width: 34px; }
+.brand { display: grid; line-height: 1.15; min-width: 0; }
+.brand strong { font-family: var(--display); font-size: 15px; }
+.brand small { color: var(--muted); font-size: 12px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.org-badge { margin-left: auto; font-size: 11px; font-weight: 800; letter-spacing: .08em; text-transform: uppercase; color: var(--on-gold); background: var(--gold); padding: 4px 9px; border-radius: 999px; }
+.org-badge[hidden] { display: none; }
+.tabs { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; max-width: 1240px; margin: 10px auto 0; padding: 0 0 10px; }
+.tabs::-webkit-scrollbar { display: none; }
+.tabs a { flex: none; display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line-strong); color: #cfdad2; font-weight: 700; font-size: 14px; text-decoration: none; transition: background .2s, border-color .2s, color .2s; }
+.tabs a svg { width: 16px; height: 16px; }
+.tabs a.on { background: var(--gold); border-color: var(--gold); color: var(--on-gold); }
+.tabs a[hidden] { display: none; }
+.content { max-width: 1240px; margin: 0 auto; padding: 22px 16px 80px; }
+.view { display: none; gap: 18px; }
+.view.on { display: grid; animation: rise .35s var(--ease); }
+.view-head { display: grid; gap: 6px; }
+.view-head h1 { font-size: clamp(24px, 6vw, 36px); }
+.view-head p { color: var(--muted); max-width: 62ch; }
+@media (min-width: 960px) {
+  .app.on { display: grid; grid-template-columns: 250px 1fr; gap: 36px; max-width: 1240px; margin: 0 auto; padding: 0 32px; }
+  .topbar { position: sticky; top: 24px; align-self: start; margin-top: 24px; border: 1px solid var(--line); border-radius: 22px; padding: 20px 16px; background: var(--panel); }
+  .topbar-row { flex-wrap: wrap; }
+  .topbar-row img { width: 46px; }
+  .org-badge { margin-left: 0; }
+  .tabs { flex-direction: column; overflow: visible; margin-top: 18px; padding: 0; gap: 4px; }
+  .tabs a { border: 0; border-radius: 12px; padding: 11px 12px; }
+  .tabs a:not(.on):hover { background: rgba(255,255,255,.05); }
+  .content { padding: 36px 0 80px; }
+}
+
+/* Cards and common bits */
+.card { background: var(--panel); border: 1px solid var(--line); border-radius: var(--radius); padding: 18px; display: grid; gap: 14px; backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.card h2 { font-size: 15px; text-transform: uppercase; letter-spacing: .1em; display: flex; align-items: center; gap: 10px; }
+.card h2 .count { margin-left: auto; font-family: var(--body); font-size: 13px; letter-spacing: 0; text-transform: none; color: var(--muted); font-weight: 700; font-variant-numeric: tabular-nums; }
+.grid2 { display: grid; gap: 18px; }
+@media (min-width: 900px) { .grid2 { grid-template-columns: 1fr 1fr; align-items: start; } }
+.muted-note { color: var(--muted); font-size: 14px; }
+.row { display: flex; gap: 10px; flex-wrap: wrap; align-items: center; }
+.row > .input { flex: 1 1 160px; }
+.btn-sm { min-height: 40px; padding: 0 14px; font-size: 14px; border-radius: 11px; }
+.btn-danger { border: 1.5px solid rgba(255,138,122,.5); color: var(--bad); }
+.btn[disabled] { opacity: .5; pointer-events: none; }
+select.input { appearance: none; -webkit-appearance: none; background-image: linear-gradient(45deg, transparent 50%, #93a79b 50%), linear-gradient(135deg, #93a79b 50%, transparent 50%); background-position: calc(100% - 20px) 50%, calc(100% - 14px) 50%; background-size: 6px 6px; background-repeat: no-repeat; padding-right: 38px; }
+textarea.input { min-height: 96px; resize: vertical; line-height: 1.5; }
+.form-grid { display: grid; gap: 14px; }
+@media (min-width: 640px) { .form-grid.two { grid-template-columns: 1fr 1fr; } }
+.empty { color: var(--muted); padding: 18px 0; text-align: center; }
+
+/* Matchday */
+.game-card { position: relative; overflow: hidden; }
+.game-card::before { content: ""; position: absolute; inset: 0 0 auto 0; height: 4px; background: linear-gradient(90deg, var(--green) 0 30%, var(--gold) 30% 55%, var(--red) 55% 80%, #000 80% 100%); }
+.game-when { font-family: var(--display); font-size: clamp(22px, 5vw, 30px); line-height: 1.1; }
+.game-meta { display: flex; flex-wrap: wrap; gap: 8px; }
+.chip { display: inline-flex; align-items: center; gap: 6px; font-size: 13px; font-weight: 700; padding: 6px 11px; border-radius: 999px; border: 1px solid var(--line-strong); color: #d7e1da; background: rgba(255,255,255,.03); }
+.chip svg { width: 14px; height: 14px; color: var(--gold); }
+.spots { display: grid; gap: 8px; }
+.spots-bar { height: 10px; border-radius: 999px; background: rgba(255,255,255,.08); overflow: hidden; }
+.spots-bar i { display: block; height: 100%; background: linear-gradient(90deg, var(--green), var(--gold)); border-radius: 999px; transition: width .5s var(--ease); }
+.spots-text { display: flex; justify-content: space-between; font-weight: 700; font-size: 14px; font-variant-numeric: tabular-nums; }
+.status-pill { font-size: 12px; font-weight: 800; padding: 4px 10px; border-radius: 999px; }
+.status-in { background: rgba(31,157,85,.2); color: #7fe0a6; }
+.status-wait { background: rgba(242,193,78,.18); color: var(--gold); }
+.plist { list-style: none; display: grid; gap: 6px; counter-reset: p; }
+.plist li { display: grid; grid-template-columns: 30px 1fr auto; gap: 10px; align-items: center; padding: 9px 12px; border-radius: 12px; background: rgba(0,0,0,.2); border: 1px solid var(--line); }
+.plist li::before { counter-increment: p; content: counter(p); font-family: var(--display); font-size: 12px; color: var(--gold); font-variant-numeric: tabular-nums; }
+.plist li.me { border-color: rgba(242,193,78,.5); }
+.plist .nm { font-weight: 700; min-width: 0; overflow-wrap: anywhere; }
+.plist .nm small { color: var(--muted); font-weight: 600; margin-left: 6px; }
+.plist .acts { display: flex; gap: 6px; align-items: center; }
+.tag { font-size: 11px; font-weight: 800; padding: 3px 8px; border-radius: 999px; text-transform: uppercase; letter-spacing: .05em; }
+.tag-paid { background: rgba(31,157,85,.22); color: #7fe0a6; }
+.tag-unpaid { background: rgba(255,255,255,.06); color: var(--muted); }
+button.tag { cursor: pointer; border: 0; }
+.icon-btn { width: 32px; height: 32px; border-radius: 9px; display: grid; place-items: center; color: var(--muted); border: 1px solid var(--line-strong); }
+.icon-btn:hover { color: var(--bad); border-color: var(--bad); }
+.icon-btn svg { width: 15px; height: 15px; }
+.plist-cols { display: grid; gap: 6px; }
+@media (min-width: 700px) { .plist-cols .plist { grid-template-columns: 1fr 1fr; column-gap: 8px; } }
+
+/* Teams */
+.teams { display: grid; gap: 18px; }
+@media (min-width: 760px) { .teams { grid-template-columns: 1fr 1fr; } }
+.team { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--line); background: var(--panel); }
+.team-head { display: flex; align-items: center; gap: 12px; padding: 14px 16px; font-family: var(--display); font-size: 18px; color: #160c02; }
+.team-head .n { margin-left: auto; font-family: var(--body); font-size: 13px; font-weight: 800; opacity: .75; }
+.team.orange .team-head { background: linear-gradient(90deg, #ff9a3c, #f07a1a); }
+.team.blue .team-head { background: linear-gradient(90deg, #5b95ff, #2f6fdb); color: #fff; }
+.team ol { list-style: none; padding: 10px; display: grid; gap: 6px; }
+.team li { display: flex; align-items: center; gap: 10px; padding: 9px 12px; border-radius: 10px; background: rgba(0,0,0,.2); font-weight: 700; }
+.pos { margin-left: auto; font-size: 11px; font-weight: 800; padding: 3px 7px; border-radius: 6px; background: rgba(255,255,255,.08); color: #cfdad2; }
+
+/* Season */
+.result { display: grid; grid-template-columns: auto 1fr; gap: 4px 14px; align-items: center; padding: 12px 14px; border-radius: 14px; background: rgba(0,0,0,.2); border: 1px solid var(--line); }
+.result .d { grid-row: span 2; font-weight: 800; font-size: 13px; color: var(--muted); text-align: center; line-height: 1.2; min-width: 44px; }
+.result .d b { display: block; font-family: var(--display); font-size: 20px; color: var(--text); }
+.score { display: flex; align-items: center; gap: 10px; font-weight: 800; font-size: 16px; }
+.score .sc { font-family: var(--display); font-size: 20px; font-variant-numeric: tabular-nums; }
+.dot-o, .dot-b { width: 10px; height: 10px; border-radius: 50%; display: inline-block; }
+.dot-o { background: #f07a1a; } .dot-b { background: #2f6fdb; }
+.result .who { color: var(--muted); font-size: 13px; }
+.board { list-style: none; display: grid; gap: 6px; }
+.board li { display: grid; grid-template-columns: 26px 1fr auto; gap: 10px; align-items: center; position: relative; padding: 8px 12px; border-radius: 10px; overflow: hidden; }
+.board li .bar { position: absolute; inset: 0 auto 0 0; background: rgba(242,193,78,.13); border-radius: 10px; z-index: -1; }
+.board li:first-child .bar { background: rgba(242,193,78,.28); }
+.board .rk { font-family: var(--display); font-size: 12px; color: var(--gold); }
+.board .nm { font-weight: 700; }
+.board .v { font-family: var(--display); font-variant-numeric: tabular-nums; }
+.board-tabs { display: flex; gap: 6px; }
+.board-tabs button { padding: 6px 12px; border-radius: 999px; font-weight: 700; font-size: 13px; border: 1px solid var(--line-strong); color: #cfdad2; }
+.board-tabs button.on { background: rgba(242,193,78,.16); border-color: var(--gold); color: #fff; }
+.scorer-row { display: grid; grid-template-columns: 1fr 74px 74px 36px; gap: 8px; align-items: center; }
+.scorer-row .input { padding: 10px 12px; font-size: 15px; }
+.scorer-head { display: grid; grid-template-columns: 1fr 74px 74px 36px; gap: 8px; font-size: 12px; font-weight: 800; color: var(--muted); text-transform: uppercase; letter-spacing: .06em; }
+
+/* Club */
+.notice-card { border-color: rgba(242,193,78,.35); background: linear-gradient(135deg, rgba(242,193,78,.12), rgba(18,34,26,.72)); }
+.notice-text { font-size: 17px; font-weight: 600; white-space: pre-wrap; }
+.fixture { display: grid; grid-template-columns: auto 1fr auto; gap: 14px; align-items: center; padding: 12px 14px; border-radius: 14px; background: rgba(0,0,0,.2); border: 1px solid var(--line); }
+.fixture .d { text-align: center; line-height: 1.1; min-width: 46px; }
+.fixture .d b { display: block; font-family: var(--display); font-size: 22px; }
+.fixture .d span { font-size: 12px; color: var(--muted); font-weight: 800; text-transform: uppercase; }
+.fixture .t { font-weight: 800; }
+.fixture .m { color: var(--muted); font-size: 13px; }
+
+/* Register table (organisers) */
+.table-wrap { overflow-x: auto; border-radius: 14px; border: 1px solid var(--line); }
+table.reg { width: 100%; border-collapse: collapse; font-size: 14px; min-width: 760px; }
+table.reg th, table.reg td { text-align: left; padding: 10px 12px; border-bottom: 1px solid var(--line); vertical-align: top; }
+table.reg th { font-size: 12px; text-transform: uppercase; letter-spacing: .06em; color: var(--muted); background: rgba(0,0,0,.25); position: sticky; top: 0; }
+table.reg tr:last-child td { border-bottom: 0; }
+table.reg td.missing { color: #5d7266; }
+
+/* Toast */
+.toast { pointer-events: none; position: fixed; left: 50%; bottom: calc(18px + env(safe-area-inset-bottom)); transform: translateX(-50%) translateY(20px); opacity: 0; z-index: 60; background: #0f1d16; border: 1px solid var(--line-strong); color: var(--text); padding: 12px 18px; border-radius: 14px; font-weight: 700; box-shadow: 0 20px 40px -20px rgba(0,0,0,.8); transition: opacity .25s, transform .25s var(--ease); max-width: calc(100vw - 32px); }
+.toast.on { opacity: 1; transform: translateX(-50%); }
+.toast.err { border-color: var(--bad); color: #ffd6cf; }
+.loading { color: var(--muted); text-align: center; padding: 40px 0; }
+
+/* Awards inside the app */
+.ballot { display: grid; gap: 28px; }
+.ballot-submit { position: sticky; bottom: calc(12px + env(safe-area-inset-bottom)); z-index: 5; display: grid; gap: 6px; }
+.ballot-submit .btn { box-shadow: 0 18px 40px -16px rgba(0,0,0,.9); }
+.award { scroll-margin-top: 140px; }
+@media (min-width: 960px) { .award { scroll-margin-top: 30px; } }
+.overlay { position: fixed; inset: 0; z-index: 45; background: rgba(3,8,6,.72); backdrop-filter: blur(6px); -webkit-backdrop-filter: blur(6px); display: grid; place-items: center; padding: 16px; overflow-y: auto; }
+.overlay[hidden] { display: none; }
+.overlay .sheet { margin: auto; }
+.public-winners { position: relative; z-index: 1; }
+.public-winners .wn-actions { margin-top: 8px; }
+
+/* ================= HELLO, BIRTHDAYS, INSTALL ================= */
+.topbar-out { margin-left: 8px; }
+.org-badge:not([hidden]) + .topbar-out { margin-left: 8px; }
+.org-badge[hidden] + .topbar-out { margin-left: auto; }
+@media (min-width: 960px) { .topbar-out { margin-left: 0 !important; } }
+.hello { display: grid; gap: 10px; margin-bottom: 22px; }
+.hello:empty { display: none; }
+.hello-row { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+.hello-hi { font-family: var(--display); font-weight: 700; font-size: clamp(20px, 5vw, 26px); }
+.hello-sub { color: var(--muted); font-size: 15px; }
+.countdown { font-weight: 800; font-size: 13px; padding: 8px 14px; border-radius: 999px; border: 1px solid rgba(242,193,78,.45); color: var(--gold); background: rgba(242,193,78,.08); font-variant-numeric: tabular-nums; }
+.countdown.live { background: var(--gold); color: var(--on-gold); border-color: var(--gold); animation: pulse 2s var(--ease) infinite; }
+.bday, .org-note, .install { display: flex; align-items: center; gap: 12px; padding: 12px 14px; border-radius: 14px; border: 1px solid var(--line-strong); background: rgba(255,255,255,.04); font-size: 15px; }
+.bday svg { width: 22px; height: 22px; color: var(--gold); flex: none; }
+.bday.me { border-color: rgba(242,193,78,.6); background: linear-gradient(90deg, rgba(242,193,78,.22), rgba(242,193,78,.04)); font-size: 16px; }
+.bday b { color: var(--gold); }
+.cake { width: 22px; height: 22px; flex: none; border-radius: 6px; background: linear-gradient(180deg, #f2c14e 0 30%, #d94b3f 30% 55%, #1f9d55 55% 100%); position: relative; }
+.org-note { border-style: dashed; border-color: rgba(242,193,78,.6); color: #e9eee9; }
+.install { border-color: rgba(31,157,85,.5); background: rgba(31,157,85,.1); }
+.install img { width: 28px; flex: none; }
+.install p { flex: 1; font-size: 14px; }
+@media (prefers-reduced-motion: reduce) { .countdown.live { animation: none; } }
+
+/* ================= INVITE / QR ================= */
+.qr-wrap { display: grid; justify-items: center; gap: 12px; padding: 16px; border-radius: 16px; background: #fff; color: #07110c; max-width: 280px; margin: 0 auto; width: 100%; }
+.qr { width: 100%; max-width: 240px; aspect-ratio: 1; display: grid; place-items: center; }
+.qr svg { width: 100%; height: 100%; }
+.qr .muted-note { color: #445; text-align: center; overflow-wrap: anywhere; }
+.qr-cap { display: flex; align-items: center; gap: 10px; font-size: 14px; line-height: 1.25; }
+.qr-cap img { width: 30px; }
+.qr-cap b { font-family: var(--display); font-size: 15px; }
+.invite-card .row { justify-content: center; }
+
+/* ================= FOOTBALL ================= */
+.fb-days, .fb-comps { display: flex; gap: 6px; overflow-x: auto; scrollbar-width: none; padding-bottom: 2px; }
+.fb-days::-webkit-scrollbar, .fb-comps::-webkit-scrollbar { display: none; }
+.fb-days button, .fb-comps button { flex: none; padding: 8px 14px; border-radius: 999px; border: 1px solid var(--line-strong); font-weight: 700; font-size: 14px; color: #cfdad2; display: inline-flex; align-items: center; gap: 6px; }
+.fb-days button.on { background: var(--gold); border-color: var(--gold); color: var(--on-gold); }
+.fb-comps button.on { background: rgba(242,193,78,.16); border-color: var(--gold); color: #fff; }
+.fb-comps:empty { display: none; }
+.fb-dot { width: 8px; height: 8px; border-radius: 50%; background: #ff4d4d; box-shadow: 0 0 0 3px rgba(255,77,77,.25); }
+.fb-comp h2 { gap: 10px; }
+.fb-emblem { width: 22px; height: 22px; object-fit: contain; background: #fff; border-radius: 5px; padding: 2px; }
+.fb-list { display: grid; gap: 4px; }
+.fb-row { display: grid; grid-template-columns: 46px 1fr 64px 1fr; gap: 8px; align-items: center; padding: 10px 10px; border-radius: 12px; background: rgba(0,0,0,.2); border: 1px solid transparent; }
+.fb-row.is-live { border-color: rgba(255,77,77,.4); background: linear-gradient(90deg, rgba(255,77,77,.1), rgba(0,0,0,.2)); }
+.fb-st { text-align: center; font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums; }
+.fb-live { color: #ff6b6b; display: inline-flex; align-items: center; gap: 4px; }
+.fb-live::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #ff4d4d; animation: blink 1.2s infinite; }
+@keyframes blink { 50% { opacity: .2; } }
+.fb-ft { color: var(--muted); }
+.fb-time { color: #dfe8e2; }
+.fb-team { display: flex; align-items: center; gap: 8px; min-width: 0; font-weight: 600; font-size: 14px; }
+.fb-team span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.fb-team.home { justify-content: flex-end; text-align: right; }
+.fb-team.win { font-weight: 800; color: #fff; }
+.fb-crest { width: 22px; height: 22px; object-fit: contain; flex: none; }
+.fb-crest.blank { border-radius: 50%; background: rgba(255,255,255,.1); display: inline-block; }
+.fb-score { text-align: center; font-family: var(--display); font-size: 17px; font-variant-numeric: tabular-nums; }
+.fb-score i { font-style: normal; color: var(--muted); margin: 0 4px; font-size: 14px; }
+.fb-table-pick { margin-left: auto; width: auto; font-size: 14px; padding: 8px 36px 8px 12px; text-transform: none; letter-spacing: 0; font-family: var(--body); }
+table.fb-tbl { min-width: 480px; }
+table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabular-nums; }
+.fb-tteam { display: flex; align-items: center; gap: 8px; font-weight: 700; }
+@media (min-width: 640px) { .fb-row { grid-template-columns: 56px 1fr 80px 1fr; padding: 11px 14px; } .fb-team { font-size: 15px; } }
+/* Keep wide scrolling strips and tables inside the screen */
+.content, .view > *, .grid2 > *, .card > * { min-width: 0; }
+.org-note p { flex: 1; }
+.fb-team span { white-space: normal; overflow-wrap: anywhere; line-height: 1.2; }
+@media (max-width: 420px) { .fb-row { grid-template-columns: 38px 1fr 52px 1fr; gap: 6px; padding: 9px 8px; } .fb-team { font-size: 13px; gap: 6px; } .fb-crest { width: 18px; height: 18px; } }
+
 </style>
 </head>
 <body>

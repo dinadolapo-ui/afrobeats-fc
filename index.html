@@ -641,6 +641,12 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
 .pp-bio li::marker { color: var(--gold); }
 /* real sponsor logos: wide white panel so landscape logos stay readable */
 .sp-card img.sp-logo { width: 100%; max-width: 260px; height: 96px; object-fit: contain; border-radius: 14px; padding: 10px; background: #fff; }
+.sp-about { font-size: 13.5px; color: var(--muted); line-height: 1.55; }
+.sp-about p { margin: 0 0 6px; }
+.sp-about.long { text-align: left; }
+.sponsor-grid:has(.sp-about.long) { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
+.people-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); align-items: start; }
+.sponsor-grid { align-items: start; }
 
 </style>
 </head>
@@ -1370,7 +1376,7 @@ const spInitials = n => { const w = String(n || "").split(/\s+/).filter(x => x &
 function sponsorCard(x) {
   const logo = x.logo ? '<img class="sp-logo" src="' + esc(x.logo) + '" alt="' + esc(x.name) + ' logo" loading="lazy" referrerpolicy="no-referrer">'
     : '<span class="sp-logo sp-ph" aria-hidden="true">' + esc(spInitials(x.name)) + '</span>';
-  return '<article class="sp-card">' + logo + '<h3>' + esc(x.name) + '</h3><p class="' + (x.about ? "" : "pp-soon") + '">' + esc(x.about || "More about our sponsor coming soon.") + '</p>' +
+  return '<article class="sp-card">' + logo + '<h3>' + esc(x.name) + '</h3>' + (x.about ? '<div class="sp-about' + (x.about.length > 160 ? " long" : "") + '">' + bioHtml(x.about) + '</div>' : '<p class="pp-soon">More about our sponsor coming soon.</p>') +
     (x.website ? '<a class="btn btn-ghost btn-sm" href="' + esc(x.website) + '" target="_blank" rel="noopener">Visit website</a>' : "") + '</article>';
 }
 function renderAbout() {

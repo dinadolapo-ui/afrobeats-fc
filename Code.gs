@@ -20,7 +20,7 @@ const FIRST_PICK_COL = 4; // Votes: Submitted, Voter, Phone, then one column per
 
 /* ---------- tabs and their columns ---------- */
 const T = {
-  members:  { name: 'Members',   head: ['Name', 'Phone', 'Organiser'] },
+  members:  { name: 'Members',   head: ['Name', 'Phone', 'Organiser', 'Ballot name'] },
   register: { name: 'Register',  head: ['Key', 'Member name', 'Nickname', 'Full name', 'Date of birth', 'Position', 'Contact name', 'Contact relation', 'Contact phone', 'Updated'] },
   signups:  { name: 'Signups',   head: ['Id', 'Game', 'Name', 'Key', 'Paid', 'Status', 'Added', 'Guest'] },
   teams:    { name: 'Teams',     head: ['Game', 'Name', 'Team', 'Signup'] },
@@ -48,7 +48,7 @@ function doGet(e) {
   if (p.winners) return reply(showWinners_() ? { ok: true, published: true, ballots: ballotCount_(), awards: winners_() } : { ok: true, published: false });
   // Legacy awards page check (kept so old links keep working)
   const phone = phone_(p.check);
-  return reply({ ok: true, voting: isClosed_() ? 'closed' : 'open', member: phone ? !!member_(phone) : null, voted: phone ? hasVoted_(phone) : false });
+  return reply({ ok: true, voting: votingPhase_() === 'open' ? 'open' : 'closed', member: phone ? !!member_(phone) : null, voted: phone ? hasVoted_(phone) : false });
 }
 
 function doPost(e) {
@@ -138,6 +138,7 @@ function members_() {
   if (membersCache_) return membersCache_;
   const list = read_(T.members).filter(r => key10_(r.Phone)).map(r => ({
     name: clean_(r.Name, 80) || 'Member', key: key10_(r.Phone), organiser: r.Organiser === 'TRUE',
+    ballot: clean_(r['Ballot name'], 200),
   }));
   membersCache_ = list;
   return list;
@@ -539,23 +540,77 @@ function clubOpen_() { const sh = ss_().getSheetByName(T.settings.name); return 
    Awards
    ==================================================================== */
 function awardsState_(me) {
-  const published = showWinners_();
-  return { open: !isClosed_(), voted: hasVoted_(me.key), published: published, ballots: published ? ballotCount_() : null, winners: published ? winners_() : null };
+  const published = showWinners_(), phase = votingPhase_(), w = votingWindow_();
+  const s = { open: phase === 'open', phase: phase, opensAt: w.opens || null, closesAt: w.closes || null,
+    voted: hasVoted_(me.key), published: published, ballots: published ? ballotCount_() : null, winners: published ? winners_() : null,
+    selfNames: selfNames_(me) };
+  if (me.organiser) {
+    s.turnout = { ballots: ballotCount_(), members: members_().length };
+    // Organisers see the results privately once voting has closed (for ordering the cups)
+    if (!published && phase === 'closed') s.private = { ballots: ballotCount_(), awards: winners_() };
+  }
+  return s;
+}
+function votingClosedMessage_(phase) {
+  if (phase === 'before') {
+    const w = votingWindow_();
+    return 'Voting opens ' + (w.opens ? Utilities.formatDate(new Date(w.opens), 'Europe/London', "EEE d MMM 'at' h:mma").replace('AM', 'am').replace('PM', 'pm') : 'soon') + '.';
+  }
+  return 'Voting has closed. Thanks for taking part!';
 }
 function awardsVote_(me, picks) {
-  if (isClosed_()) fail_('Voting has closed. Thanks for taking part!');
+  const phase = votingPhase_();
+  if (phase !== 'open') fail_(votingClosedMessage_(phase));
   if (hasVoted_(me.key)) fail_('This phone number has already voted.');
+  const self = selfNames_(memberByKey_(me.key) || me);
   const row = [new Date(), me.name, "'" + me.key];
-  CATEGORY_IDS.forEach(id => {
+  CATEGORY_IDS.forEach((id, i) => {
     const name = clean_(picks[id], 200);
     if (!name) fail_('Every award needs a pick.');
+    if (id !== 'omg' && self.indexOf(norm_(name)) >= 0) fail_("You can't vote for yourself for " + CATEGORY_NAMES[i] + '. Pick someone else.');
     row.push(/^[=+\-@]/.test(name) ? "'" + name : name);
   });
   sheet_(T.votes).appendRow(row);
 }
+/* ---------- no voting for yourself ---------- */
+function norm_(s) { return String(s || '').normalize('NFD').replace(/[\u0300-\u036f]/g, '').toLowerCase().replace(/[^a-z0-9]/g, ''); }
+// Every spelling that means "this member": their name, the parts in and out of brackets, and Members!D (Ballot name)
+function selfNames_(m) {
+  const out = [];
+  const add = x => { const n = norm_(x); if (n.length >= 2 && out.indexOf(n) < 0) out.push(n); };
+  const name = String((m && m.name) || '');
+  if (name && name !== 'Guest') { add(name); name.split(/[()]/).forEach(add); }
+  String((m && m.ballot) || '').split(/[,;\/]/).forEach(add);
+  return out;
+}
+/* ---------- voting window (Settings B7 and B8, UK time) ---------- */
+function parseUk_(v) {
+  const t = String(v || '').trim();
+  let m = t.match(/^(\d{4})-(\d{1,2})-(\d{1,2})[ T]+(\d{1,2}):(\d{2})/), y, mo, d, h, mi;
+  if (m) { y = m[1]; mo = m[2]; d = m[3]; h = m[4]; mi = m[5]; }
+  else { m = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{4})[ ,]+(\d{1,2}):(\d{2})/); if (!m) return null; d = m[1]; mo = m[2]; y = m[3]; h = m[4]; mi = m[5]; }
+  const two = x => ('0' + x).slice(-2);
+  try { return Utilities.parseDate(y + '-' + two(mo) + '-' + two(d) + ' ' + two(h) + ':' + mi, 'Europe/London', 'yyyy-MM-dd HH:mm').getTime(); }
+  catch (e) { return null; }
+}
+function votingWindow_() {
+  const sh = ss_().getSheetByName(T.settings.name);
+  if (!sh || sh.getRange('A7').getValue() !== 'Voting opens') return {};
+  const v = sh.getRange('B7:B8').getDisplayValues();
+  return { opens: parseUk_(v[0][0]), closes: parseUk_(v[1][0]) };
+}
+// 'before' | 'open' | 'closed'. The Voting open tickbox is a master switch on top of the dates.
+function votingPhase_() {
+  if (isClosed_()) return 'closed';
+  const w = votingWindow_(), now = Date.now();
+  if (w.opens && now < w.opens) return 'before';
+  if (w.closes && now > w.closes) return 'closed';
+  return 'open';
+}
 // Old awards page (no sign-in): name + phone in the request
 function legacyVote_(data) {
-  if (isClosed_()) return { ok: false, error: 'Voting has closed. Thanks for taking part!' };
+  const phase = votingPhase_();
+  if (phase !== 'open') return { ok: false, error: votingClosedMessage_(phase) };
   const phone = phone_(data.phone), m = phone && member_(phone);
   if (!phone) return { ok: false, error: 'Enter a full phone number to vote.' };
   if (!m) return { ok: false, error: "This number isn't on the ABFC members list. Message the committee to be added." };
@@ -595,6 +650,10 @@ function setUp() {
   const m = sheet_(T.members);
   m.getRange('B:B').setNumberFormat('@');
   if (m.getRange('C1').getValue() !== 'Organiser') m.getRange('C1').setValue('Organiser').setFontWeight('bold');
+  if (m.getRange('D1').getValue() !== 'Ballot name') {
+    m.getRange('D1').setValue('Ballot name').setFontWeight('bold')
+      .setNote('How this member appears on the awards ballot, if different from their name (e.g. Dolapo). Separate several with commas. Members can\'t vote for themselves.');
+  }
   if (m.getLastRow() > 1) {
     const c = m.getRange(2, 3, m.getLastRow() - 1, 1);
     const vals = c.getValues();
@@ -615,6 +674,17 @@ function setUp() {
     st.getRange('A4:C4').setValues([['Show club features', false, 'Tick to show Matchday, Teams, Season, Football, Club and My details to every member. Unticked: members only see Awards; organisers see everything.']]);
     st.getRange('B4').insertCheckboxes().setValue(false);
   }
+  st.getRange('C2').setValue('Master switch. Untick to stop voting at any time. Even when ticked, voting only runs between the two dates below.');
+  if (st.getRange('A7').getValue() !== 'Voting opens') {
+    st.getRange('B7:B8').setNumberFormat('@');
+    st.getRange('A7:C8').setValues([
+      ['Voting opens', '2026-11-21 12:00', 'UK time, written as yyyy-mm-dd hh:mm (24-hour). Leave empty to open as soon as the tickbox is ticked.'],
+      ['Voting closes', '2026-11-25 23:59', 'UK time, written as yyyy-mm-dd hh:mm (24-hour). After this, organisers see the results privately and the cup list is emailed.'],
+    ]);
+  }
+  if (st.getRange('A9').getValue() !== 'Results email to') {
+    st.getRange('A9:C9').setValues([['Results email to', Session.getEffectiveUser().getEmail(), 'Who gets the private winners and cup engraving list when voting closes. Separate several addresses with commas.']]);
+  }
   if (st.getRange('A5').getValue() !== 'Football data key') {
     st.getRange('A5:C5').setValues([['Football data key', '', 'Free key from football-data.org (Register, then check your email). Paste it in the Value cell.']]);
   }
@@ -624,6 +694,26 @@ function setUp() {
   ['register', 'signups', 'teams', 'results', 'stats', 'motm', 'club', 'fixtures', 'joins'].forEach(k => {
     const sh = sheet_(T[k]); sh.getRange(1, 1, sh.getMaxRows(), T[k].head.length).setNumberFormat('@');
   });
+}
+
+// Run once: fills Members!D (Ballot name) where the ballot spelling differs from the member's name.
+// Only fills empty cells, so it never overwrites your edits.
+function fillBallotNames() {
+  const map = {
+    'Oluwaleke Oyefolu': 'Leke', 'Ajudua Gaskiya Paul, Esq': 'Gaskiya', 'Bishop7': 'Bishop', 'Bolaji Bernard': 'Bolaji',
+    'Deena': 'Dolapo', 'Efe Obels': 'Efe', 'Ezekamba (Fred Bosah)': 'Fred', 'Fabulous Chimaobi': 'Chimaobi',
+    'Jesse Ugwu': 'Jesse', 'Kun Ibrahim': 'Ibrahim', 'Mamuzo': 'Mamuzio', 'Vitalis Idachaba': 'Vitalis',
+    'Ifeanyi Tupac Shakur': 'Shakur', 'Alemabari Aadum': 'Alema',
+  };
+  const sh = sheet_(T.members), last = sh.getLastRow();
+  if (last < 2) return 0;
+  const vals = sh.getRange(2, 1, last - 1, 4).getValues();
+  let n = 0;
+  vals.forEach((r, i) => {
+    const want = map[String(r[0]).trim()];
+    if (want && !String(r[3]).trim()) { sh.getRange(i + 2, 4).setValue(want); n++; }
+  });
+  return n;
 }
 
 /* ====================================================================

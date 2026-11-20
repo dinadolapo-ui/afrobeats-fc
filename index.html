@@ -634,6 +634,11 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
 .pp-role { color: var(--gold); font-weight: 700; font-size: 13px; margin: 2px 0 6px; text-transform: uppercase; letter-spacing: .08em; }
 .pp-bio { font-size: 14px; line-height: 1.5; color: var(--text, #eef4ef); }
 .pp-soon { color: var(--muted) !important; font-style: italic; }
+.pp-bio p { margin: 0 0 8px; }
+.pp-bio p:last-child { margin-bottom: 0; }
+.pp-bio ul { margin: 4px 0 10px; padding-left: 18px; }
+.pp-bio li { margin: 2px 0; }
+.pp-bio li::marker { color: var(--gold); }
 
 </style>
 </head>
@@ -1338,11 +1343,25 @@ $("resultForm").addEventListener("submit", async e => {
 
 /* ---------- about: sponsors, trustees, admin ---------- */
 const initials = n => String(n || "").replace(/^(mr|mrs|ms|miss|dr|chief)\.?\s+/i, "").split(/\s+/).filter(Boolean).slice(0, 2).map(w => w[0]).join("").toUpperCase() || "?";
+// Bio text from the Sheet: blank lines start a new paragraph, lines starting with • * - become bullet points
+function bioHtml(t) {
+  const out = []; let list = null, para = [];
+  const flushP = () => { if (para.length) { out.push("<p>" + para.map(esc).join("<br>") + "</p>"); para = []; } };
+  const flushL = () => { if (list) { out.push("<ul>" + list.map(x => "<li>" + esc(x) + "</li>").join("") + "</ul>"); list = null; } };
+  String(t).split("\n").forEach(line => {
+    const b = line.match(/^\s*[•*·\-–]\s*(.+)$/);
+    if (b) { flushP(); (list = list || []).push(b[1]); }
+    else if (!line.trim()) { flushP(); flushL(); }
+    else { flushL(); para.push(line.trim()); }
+  });
+  flushP(); flushL();
+  return out.join("");
+}
 function personCard(p) {
   const pic = p.photo ? '<img class="pp-photo" src="' + esc(p.photo) + '" alt="Photo of ' + esc(p.name) + '" loading="lazy" referrerpolicy="no-referrer" onerror="this.replaceWith(Object.assign(document.createElement(\'span\'),{className:\'pp-photo pp-ph\',textContent:\'' + esc(initials(p.name)) + '\'}))">'
     : '<span class="pp-photo pp-ph" aria-hidden="true">' + esc(initials(p.name)) + '</span>';
   return '<article class="pp-card">' + pic + '<div class="pp-body"><h3>' + esc(p.name) + '</h3>' + (p.role ? '<p class="pp-role">' + esc(p.role) + '</p>' : "") +
-    '<p class="pp-bio' + (p.bio ? "" : " pp-soon") + '">' + esc(p.bio || "Bio coming soon.") + '</p></div></article>';
+    (p.bio ? '<div class="pp-bio">' + bioHtml(p.bio) + '</div>' : '<p class="pp-bio pp-soon">Bio coming soon.</p>') + '</div></article>';
 }
 // "DEENATECH LTD" -> "DE", "T21 CONSULTANCY" -> "TC": skip Ltd / Limited / PLC
 const spInitials = n => { const w = String(n || "").split(/\s+/).filter(x => x && !/^(ltd|limited|plc|llc|inc)\.?$/i.test(x)); return (w.length > 1 ? w[0][0] + w[1][0] : (w[0] || "?").slice(0, 2)).toUpperCase(); };

@@ -32,7 +32,10 @@ const T = {
   apart:    { name: 'KeepApart', head: ['Player A', 'Player B'] },
   votes:    { name: 'Votes',     head: ['Submitted', 'Voter', 'Phone'].concat(CATEGORY_NAMES) },
   settings: { name: 'Settings',  head: ['Setting', 'Value', 'What it does'] },
+  joins:    { name: 'JoinRequests', head: ['Id', 'Name', 'Phone', 'Requested', 'Status'] },
 };
+// football-data.org free competitions
+const FOOTBALL_CODES = ['PL', 'CL', 'PD', 'SA', 'BL1', 'FL1', 'ELC', 'DED', 'PPL', 'BSA', 'EC', 'WC'];
 const POSITIONS = ['GK', 'DEF', 'MID', 'ATT'];
 const TEAM_NAMES = ['Orange', 'Blue'];
 const SESSION_DAYS = 180;
@@ -67,9 +70,13 @@ function fail_(msg) { const e = new Error(msg); e.userMessage = msg; throw e; }
 
 function handle_(d) {
   if (d.action === 'signin') return signIn_(d.phone);
+  if (d.action === 'requestJoin') return requestJoin_(d.name, d.phone);
   const me = session_(d.token);
   if (!me) return { ok: false, error: 'Please sign in again.', signin: true };
   const org = () => { if (!me.organiser) fail_('Only organisers can do that.'); };
+  const open = () => { if (!me.organiser && !clubOpen_()) fail_("That part of the app isn't open yet."); };
+  if (d.action === 'football') { open(); return Object.assign({ ok: true }, football_(d)); }
+  if (['join', 'leave', 'motmVote', 'saveRegister'].indexOf(d.action) >= 0) open();
   switch (d.action) {
     case 'state': break;
     case 'join': join_(me); break;
@@ -87,6 +94,8 @@ function handle_(d) {
     case 'setNotice': org(); setClub_('notice', clean_(d.text, 600)); break;
     case 'addFixture': org(); addFixture_(d.fixture || {}); break;
     case 'removeFixture': org(); removeFixture_(d.id); break;
+    case 'approveJoin': org(); approveJoin_(d.id); break;
+    case 'declineJoin': org(); declineJoin_(d.id); break;
     default: fail_('Unknown request.');
   }
   return { ok: true, state: state_(me) };
@@ -161,8 +170,11 @@ function state_(me) {
   const statsRows = read_(T.stats);
   const latest = results[0] || null;
 
+  const bdays = birthdaysToday_();
   const s = {
-    me: { name: me.name, display: me.display, organiser: me.organiser },
+    me: { name: me.name, display: me.display, organiser: me.organiser, birthday: bdays.keys.indexOf(me.key) >= 0 },
+    flags: { clubOpen: clubOpen_(), football: !!footballKey_() },
+    birthdays: bdays.names,
     club: {
       notice: club.notice || '',
       game: game ? { date: game, time: club.nextTime || '', venue: club.nextVenue || '', fee: club.nextFee || '', capacity: cap } : null,
@@ -196,6 +208,7 @@ function state_(me) {
         dob: r ? r['Date of birth'] : '', position: r ? r.Position : '', contactName: r ? r['Contact name'] : '',
         contactRelation: r ? r['Contact relation'] : '', contactPhone: r ? r['Contact phone'] : '', done: !!r };
     }).sort((a, b) => a.member.localeCompare(b.member));
+    s.joinRequests = read_(T.joins).filter(r => r.Status === 'pending').map(r => ({ id: r.Id, name: r.Name, phone: r.Phone, requested: Number(r.Requested) || 0 }));
   }
   return s;
 }
@@ -415,6 +428,114 @@ function saveRegister_(me, d) {
 }
 
 /* ====================================================================
+   Joining by QR code: requests wait for an organiser to approve them
+   ==================================================================== */
+function requestJoin_(name, raw) {
+  const lock = LockService.getScriptLock(); lock.waitLock(20000);
+  try {
+    name = clean_(name, 60);
+    const phone = phone_(raw);
+    if (name.length < 2) return { ok: false, error: 'Enter your name.' };
+    if (!phone) return { ok: false, error: 'Enter your full phone number, e.g. 07123 456789.' };
+    const k = key10_(phone);
+    if (members_().some(m => m.key === k)) return { ok: false, error: "You're already a member. Sign in with this number instead.", member: true };
+    const pending = read_(T.joins).filter(r => r.Status === 'pending');
+    if (pending.some(r => key10_(r.Phone) === k)) return { ok: true, already: true };
+    if (pending.length >= 300) return { ok: false, error: 'Too many requests are waiting. Please message the committee.' };
+    append_(T.joins, { Id: id_(), Name: name, Phone: String(raw).trim().slice(0, 30), Requested: String(Date.now()), Status: 'pending' });
+    return { ok: true };
+  } finally { lock.releaseLock(); }
+}
+function approveJoin_(id) {
+  const r = read_(T.joins).find(x => x.Id === String(id) && x.Status === 'pending');
+  if (!r) fail_('That request has already been handled.');
+  if (!members_().some(m => m.key === key10_(r.Phone))) {
+    const sh = sheet_(T.members);
+    sh.appendRow(["'" + r.Name, "'" + r.Phone, false]);
+    sh.getRange(sh.getLastRow(), 3).insertCheckboxes();
+    delete readCache_[T.members.name]; membersCache_ = null;
+  }
+  update_(T.joins, r._row, { Status: 'approved' });
+}
+function declineJoin_(id) {
+  const r = read_(T.joins).find(x => x.Id === String(id) && x.Status === 'pending');
+  if (r) update_(T.joins, r._row, { Status: 'declined' });
+}
+
+/* ====================================================================
+   Birthdays (names only; dates of birth never leave the Sheet)
+   ==================================================================== */
+function birthdaysToday_() {
+  const today = Utilities.formatDate(new Date(), 'Europe/London', 'dd/MM');
+  const names = [], keys = [];
+  read_(T.register).forEach(r => {
+    if (String(r['Date of birth']).slice(0, 5) !== today) return;
+    const m = memberByKey_(r.Key); if (!m) return;
+    names.push(r.Nickname || m.name); keys.push(r.Key);
+  });
+  return { names: names, keys: keys };
+}
+
+/* ====================================================================
+   Football scores from football-data.org (free key in Settings!B5)
+   ==================================================================== */
+function footballKey_() { const sh = ss_().getSheetByName(T.settings.name); return sh ? String(sh.getRange('B5').getDisplayValue()).trim() : ''; }
+function football_(d) {
+  const key = footballKey_();
+  if (!key) return { configured: false };
+  const cache = CacheService.getScriptCache();
+  if (d.kind === 'table') {
+    const code = FOOTBALL_CODES.indexOf(d.code) >= 0 ? d.code : 'PL';
+    const ck = 'tbl:' + code;
+    let body = cache.get(ck);
+    if (!body) {
+      const res = UrlFetchApp.fetch('https://api.football-data.org/v4/competitions/' + code + '/standings', { headers: { 'X-Auth-Token': key }, muteHttpExceptions: true });
+      if (res.getResponseCode() !== 200) return { configured: true, error: footballError_(res.getResponseCode()) };
+      const j = JSON.parse(res.getContentText());
+      const total = (j.standings || []).find(t => t.type === 'TOTAL') || (j.standings || [])[0] || { table: [] };
+      body = JSON.stringify({ code: code, name: (j.competition || {}).name || code, table: (total.table || []).map(t => ({
+        pos: t.position, team: (t.team || {}).shortName || (t.team || {}).name, crest: (t.team || {}).crest, played: t.playedGames,
+        won: t.won, draw: t.draw, lost: t.lost, gd: t.goalDifference, pts: t.points })) });
+      cache.put(ck, body, 1800);
+    }
+    return { configured: true, table: JSON.parse(body) };
+  }
+  const re = /^\d{4}-\d{2}-\d{2}$/;
+  const from = re.test(d.from) ? d.from : Utilities.formatDate(new Date(), 'Europe/London', 'yyyy-MM-dd');
+  const to = re.test(d.to) ? d.to : from;
+  const ck = 'fx:' + from + ':' + to;
+  let body = cache.get(ck);
+  if (!body) {
+    const url = 'https://api.football-data.org/v4/matches?competitions=' + FOOTBALL_CODES.join(',') + '&dateFrom=' + from + '&dateTo=' + to;
+    const res = UrlFetchApp.fetch(url, { headers: { 'X-Auth-Token': key }, muteHttpExceptions: true });
+    if (res.getResponseCode() !== 200) {
+      const stale = cache.get('stale:' + ck);
+      if (stale) return { configured: true, stale: true, matches: JSON.parse(stale) };
+      return { configured: true, error: footballError_(res.getResponseCode()) };
+    }
+    const j = JSON.parse(res.getContentText());
+    const list = (j.matches || []).map(m => ({
+      id: m.id, utc: m.utcDate, status: m.status, minute: m.minute || null,
+      comp: (m.competition || {}).code, compName: (m.competition || {}).name, compEmblem: (m.competition || {}).emblem,
+      home: (m.homeTeam || {}).shortName || (m.homeTeam || {}).name || 'TBC', homeCrest: (m.homeTeam || {}).crest,
+      away: (m.awayTeam || {}).shortName || (m.awayTeam || {}).name || 'TBC', awayCrest: (m.awayTeam || {}).crest,
+      hs: ((m.score || {}).fullTime || {}).home, as: ((m.score || {}).fullTime || {}).away,
+    }));
+    body = JSON.stringify(list);
+    const live = list.some(m => m.status === 'IN_PLAY' || m.status === 'PAUSED');
+    cache.put(ck, body, live ? 60 : 300);
+    cache.put('stale:' + ck, body, 21600);
+  }
+  return { configured: true, matches: JSON.parse(body) };
+}
+function footballError_(code) {
+  if (code === 400 || code === 403) return 'The football data key in the Settings tab isn\'t working. Check it was copied correctly.';
+  if (code === 429) return 'Scores are busy right now. Try again in a minute.';
+  return 'Football scores are unavailable right now.';
+}
+function clubOpen_() { const sh = ss_().getSheetByName(T.settings.name); return !!sh && sh.getRange('B4').getValue() === true; }
+
+/* ====================================================================
    Awards
    ==================================================================== */
 function awardsState_(me) {
@@ -490,10 +611,17 @@ function setUp() {
     st.getRange('A3:C3').setValues([['Show winners', false, 'Tick to show the top 3 for each award in the app.']]);
     st.getRange('B3').insertCheckboxes().setValue(false);
   }
+  if (st.getRange('A4').getValue() !== 'Show club features') {
+    st.getRange('A4:C4').setValues([['Show club features', false, 'Tick to show Matchday, Teams, Season, Football, Club and My details to every member. Unticked: members only see Awards; organisers see everything.']]);
+    st.getRange('B4').insertCheckboxes().setValue(false);
+  }
+  if (st.getRange('A5').getValue() !== 'Football data key') {
+    st.getRange('A5:C5').setValues([['Football data key', '', 'Free key from football-data.org (Register, then check your email). Paste it in the Value cell.']]);
+  }
   // Club defaults
   if (!clubMap_().capacity) setClub_('capacity', '36');
   // Plain-text columns so dates and numbers stay as typed
-  ['register', 'signups', 'teams', 'results', 'stats', 'motm', 'club', 'fixtures'].forEach(k => {
+  ['register', 'signups', 'teams', 'results', 'stats', 'motm', 'club', 'fixtures', 'joins'].forEach(k => {
     const sh = sheet_(T[k]); sh.getRange(1, 1, sh.getMaxRows(), T[k].head.length).setNumberFormat('@');
   });
 }

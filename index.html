@@ -583,6 +583,37 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
 .pin-help { margin-top: -2px; font-size: 13px; color: var(--muted); }
 .linkish { background: none; border: 0; padding: 0; font: inherit; color: var(--gold); font-weight: 700; text-decoration: underline; cursor: pointer; }
 #voterPhone[readonly] { opacity: .7; }
+.btn-xs { min-height: 30px; padding: 0 10px; font-size: 12.5px; border-radius: 9px; }
+.pin-cell { white-space: nowrap; }
+
+/* season: goals & assists for every member */
+.sub-h { font-size: 13px; text-transform: uppercase; letter-spacing: .1em; color: var(--muted); margin: 18px 0 4px; }
+#resultForm .scorer-head { grid-template-columns: 1fr 74px 74px; margin-top: 10px; }
+.stat-list { max-height: 420px; overflow-y: auto; border: 1px solid var(--line); border-radius: 14px; padding: 4px 10px; margin-bottom: 10px; }
+.stat-row { display: grid; grid-template-columns: 1fr 74px 74px; gap: 8px; align-items: center; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.stat-row:last-child { border-bottom: 0; }
+.stat-row .nm { font-weight: 600; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.stat-row .input { padding: 8px 10px; font-size: 15px; text-align: center; }
+.stat-row.has .nm { color: var(--gold); }
+
+/* matchday poll */
+.poll-q { font-weight: 800; font-size: 17px; margin: 14px 0 8px; }
+.poll-q .muted { font-weight: 500; font-size: 13px; color: var(--muted); }
+.poll-opts { display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px; }
+.poll-btn { display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 12px 8px; border-radius: 14px; border: 1.5px solid var(--line-strong, rgba(255,255,255,.18));
+  background: rgba(255,255,255,.03); color: var(--text, #fff); font: inherit; cursor: pointer; transition: background .15s, border-color .15s; }
+.poll-btn b { font-size: 16px; } .poll-btn span { font-size: 12px; color: var(--muted); }
+.poll-btn:hover { border-color: var(--gold); }
+.poll-btn.on { background: var(--gold); border-color: var(--gold); color: var(--on-gold, #1b1404); }
+.poll-btn.on span { color: inherit; opacity: .75; }
+.poll-btn[data-answer="no"].on { background: #c0392b; border-color: #c0392b; color: #fff; }
+.poll-btn[data-answer="maybe"].on { background: #3d6b8f; border-color: #3d6b8f; color: #fff; }
+.poll-h { margin-top: 18px; font-size: 15px; }
+.chips { display: flex; flex-wrap: wrap; gap: 6px; }
+.chips .chip.me { border-color: var(--gold); color: var(--gold); }
+.add-list { display: grid; gap: 6px; margin: 8px 0 4px; max-height: 360px; overflow-y: auto; }
+.add-row { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 6px 0; border-bottom: 1px solid var(--line); }
+.add-row small { font-size: 12px; }
 
 </style>
 </head>
@@ -690,7 +721,6 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
       <a href="#teams" data-tab="teams"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M7 4l-4 3 2 4 2-1v10h10V10l2 1 2-4-4-3h-3a2 2 0 0 1-4 0z"/></svg>Teams</a>
       <a href="#season" data-tab="season"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 20V10M10 20V4M16 20v-7M22 20H2"/></svg>Season</a>
       <a href="#awards" data-tab="awards"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M8 21h8M12 17v4M7 4h10v5a5 5 0 0 1-10 0V4z"/><path d="M17 5h3v2a3 3 0 0 1-3 3M7 5H4v2a3 3 0 0 0 3 3"/></svg>Awards</a>
-      <a href="#football" data-tab="football"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><circle cx="12" cy="12" r="9"/><path d="M12 7l4 3-1.5 5h-5L8 10z"/><path d="M12 3v4M16 10l4.5-1.5M14.5 15l2.5 4M9.5 15L7 19M8 10L3.5 8.5"/></svg>Football</a>
       <a href="#club" data-tab="club"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><path d="M4 11l16-7v16L4 13z"/><path d="M8 13v6"/></svg>Club</a>
       <a href="#me" data-tab="me"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="12" cy="8" r="4"/><path d="M4 21a8 8 0 0 1 16 0"/></svg>My details</a>
       <a href="#players" data-tab="players" hidden><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" aria-hidden="true"><circle cx="9" cy="8" r="3.5"/><path d="M2.5 20a6.5 6.5 0 0 1 13 0M16 4.5a3.5 3.5 0 0 1 0 7M18 14.5a6.5 6.5 0 0 1 3.5 5.5"/></svg>Players</a>
@@ -704,19 +734,27 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
       <header class="view-head"><p class="eyebrow">Matchday</p><h1 id="h-matchday">Next game</h1></header>
       <div id="mdGame"></div>
       <div class="grid2">
-        <div class="card"><h2>Playing <span class="count" id="mdCount"></span></h2><div id="mdPlayers"></div></div>
+        <div class="card"><h2>Playing (Yes) <span class="count" id="mdCount"></span></h2><div id="mdPlayers"></div>
+          <p class="muted-note">Random teams are picked from this list.</p></div>
         <div class="card"><h2>Waiting list <span class="count" id="mdWaitCount"></span></h2><div id="mdWaiting"></div>
-          <p class="muted-note">If someone drops out, the first person on the waiting list moves up automatically.</p></div>
+          <p class="muted-note">If someone changes to Maybe or No, the first person on the waiting list moves up automatically.</p>
+          <h2 class="poll-h">Maybe <span class="count" id="mdMaybeCount"></span></h2><div id="mdMaybe"></div>
+          <h2 class="poll-h">Can't make it <span class="count" id="mdNoCount"></span></h2><div id="mdNo"></div></div>
       </div>
       <div class="grid2 org-only" hidden>
-        <form class="card" id="guestForm" novalidate>
-          <h2>Add a guest</h2>
-          <p class="muted-note">For players who aren't in the members list.</p>
-          <div class="row"><input class="input" id="guestName" placeholder="Guest's name" maxlength="40" aria-label="Guest's name"><button class="btn btn-gold btn-sm" type="submit">Add</button></div>
-        </form>
+        <div class="card">
+          <h2>Add players from the members list</h2>
+          <p class="muted-note">For players who replied in WhatsApp instead. Adds them as a Yes.</p>
+          <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input class="input" type="search" id="addSearch" placeholder="Find a member" aria-label="Find a member"></div>
+          <div id="addList" class="add-list"></div>
+          <form id="guestForm" novalidate>
+            <h3 class="sub-h">Or add a guest</h3>
+            <div class="row"><input class="input" id="guestName" placeholder="Guest's name" maxlength="40" aria-label="Guest's name"><button class="btn btn-gold btn-sm" type="submit">Add</button></div>
+          </form>
+        </div>
         <form class="card" id="gameForm" novalidate>
           <h2>Set up the next game</h2>
-          <p class="muted-note">Starts a fresh sign-up list. Past results and stats are kept.</p>
+          <p class="muted-note">Opens a fresh "Are you playing?" poll for this game. Past results and stats are kept.</p>
           <div class="form-grid two">
             <div class="field"><label for="gDate">Date</label><input class="input" type="date" id="gDate"></div>
             <div class="field"><label for="gTime">Kick-off</label><input class="input" type="time" id="gTime"></div>
@@ -724,7 +762,7 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
             <div class="field"><label for="gFee">Fee</label><input class="input" id="gFee" placeholder="£5" maxlength="20"></div>
             <div class="field"><label for="gCap">Spots</label><input class="input" type="number" id="gCap" min="2" max="60" value="36"></div>
           </div>
-          <button class="btn btn-gold" type="submit">Save and open sign-ups</button>
+          <button class="btn btn-gold" type="submit">Save and open the poll</button>
         </form>
       </div>
     </section>
@@ -752,7 +790,6 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
           <div class="board-tabs" role="tablist" id="boardTabs">
             <button type="button" class="on" data-board="goals">Goals</button>
             <button type="button" data-board="assists">Assists</button>
-            <button type="button" data-board="apps">Appearances</button>
           </div>
           <div id="boardBox"></div>
         </div>
@@ -767,9 +804,13 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
             <div class="field" style="flex:1"><label for="rBlue"><span class="dot-b"></span> Blue</label><input class="input" type="number" min="0" id="rBlue" value="0"></div>
           </div>
         </div>
-        <div class="scorer-head"><span>Player</span><span>Goals</span><span>Assists</span><span></span></div>
+        <h3 class="sub-h">Goals and assists</h3>
+        <p class="muted-note">Every member from the Google Sheet is listed. Fill in goals and assists for whoever scored or set one up; leave everyone else at 0.</p>
+        <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input class="input" type="search" id="statSearch" placeholder="Find a player" aria-label="Find a player"></div>
+        <div class="scorer-head"><span>Player</span><span>Goals</span><span>Assists</span></div>
+        <div id="statRows" class="stat-list"></div>
         <div id="scorerRows" class="form-grid"></div>
-        <div class="row"><button class="btn btn-ghost btn-sm" type="button" id="addScorer">Add a player</button></div>
+        <div class="row"><button class="btn btn-ghost btn-sm" type="button" id="addScorer">Add a guest who isn't on the list</button></div>
         <p class="muted-note">Recording the same date again replaces that game's result. Saving opens Man of the Match voting for the game.</p>
         <button class="btn btn-gold" type="submit">Save result</button>
       </form>
@@ -786,21 +827,6 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
       <div class="wn-grid" id="winnersGrid"></div>
     </section>
 
-    <!-- FOOTBALL -->
-    <section class="view" id="v-football" aria-labelledby="h-football">
-      <header class="view-head"><p class="eyebrow">Around the world</p><h1 id="h-football">Football scores</h1>
-        <p>Premier League, Champions League and Europe's top leagues. Scores update every few minutes.</p></header>
-      <div class="fb-days" id="fbDays" role="tablist" aria-label="Day"></div>
-      <div class="fb-comps" id="fbComps" aria-label="Competition"></div>
-      <div id="fbBox"><p class="loading">Loading scores…</p></div>
-      <div class="card"><h2>League table
-        <select class="input fb-table-pick" id="fbTablePick" aria-label="League table">
-          <option value="PL">Premier League</option><option value="PD">La Liga</option><option value="SA">Serie A</option><option value="BL1">Bundesliga</option><option value="FL1">Ligue 1</option><option value="ELC">Championship</option><option value="DED">Eredivisie</option><option value="PPL">Primeira Liga</option><option value="BSA">Brasileirão</option>
-        </select></h2>
-        <div id="fbTable"><p class="empty">Choose a league to see its table.</p></div>
-      </div>
-      <p class="muted-note">Data from football-data.org. Free data can run a few minutes behind live.</p>
-    </section>
 
     <!-- CLUB -->
     <section class="view" id="v-club" aria-labelledby="h-club">
@@ -834,7 +860,7 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
           <div class="field"><label for="mePos">Usual position</label>
             <select class="input" id="mePos"><option value="">Not set</option><option value="GK">Goalkeeper</option><option value="DEF">Defender</option><option value="MID">Midfielder</option><option value="ATT">Attacker</option></select></div>
           <div class="field"><label for="meFull">Full name</label><input class="input" id="meFull" maxlength="80" autocomplete="name"></div>
-          <div class="field"><label for="meDob">Date of birth <span class="hint">· DD/MM/YYYY</span></label><input class="input" id="meDob" inputmode="numeric" placeholder="04/05/1990" maxlength="10"></div>
+          <div class="field"><label for="meDob">Birthday <span class="hint">· DD/MM, for birthday shout-outs</span></label><input class="input" id="meDob" inputmode="numeric" placeholder="04/05" maxlength="5"></div>
         </div>
         <h2>Emergency contact</h2>
         <div class="form-grid two">
@@ -865,8 +891,8 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
       </div>
       <div class="card">
         <div class="search"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" aria-hidden="true"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg><input class="input" type="search" id="regSearch" placeholder="Search players" aria-label="Search players"></div>
-        <div class="table-wrap"><table class="reg"><thead><tr><th>Member</th><th>Nickname</th><th>Position</th><th>Date of birth</th><th>Emergency contact</th></tr></thead><tbody id="regBody"></tbody></table></div>
-        <p class="muted-note">To make someone an organiser, tick their row in the <b>Organiser</b> column of the Members tab in the Google Sheet.</p>
+        <div class="table-wrap"><table class="reg"><thead><tr><th>Member</th><th>Nickname</th><th>Position</th><th>Birthday</th><th>Emergency contact</th><th>PIN</th></tr></thead><tbody id="regBody"></tbody></table></div>
+        <p class="muted-note">Forgotten PIN? Tap <b>Reset</b> next to the member: they choose a new PIN next time they sign in. To make someone an organiser, tick their row in the <b>Organiser</b> column of the Members tab in the Google Sheet.</p>
       </div>
     </section>
   </main>
@@ -1063,7 +1089,7 @@ async function startApp() {
 }
 
 /* ---------- tabs ---------- */
-const TABS = ["matchday", "teams", "season", "football", "awards", "club", "me", "players"];
+const TABS = ["matchday", "teams", "season", "awards", "club", "me", "players"];
 let tab = "matchday";
 // While "Show club features" is off, members only get the Awards tab; organisers always see everything
 function allowedTabs() {
@@ -1081,7 +1107,6 @@ function route() {
   if (token && !$("app").classList.contains("on")) showScreen("app");
   const ok = allowedTabs();
   if (!ok.includes(tab)) tab = ok[0];
-  if (tab === "football") loadFootball();
   document.querySelectorAll(".tabs a").forEach(a => a.classList.toggle("on", a.dataset.tab === tab));
   document.querySelectorAll(".view").forEach(v => v.classList.toggle("on", v.id === "v-" + tab));
   if (tab === "awards" && S && S.awards.published) celebrate();
@@ -1098,7 +1123,7 @@ function render() {
   const ok = allowedTabs();
   document.querySelectorAll(".tabs a").forEach(a => a.hidden = !ok.includes(a.dataset.tab));
   $("tabs").hidden = ok.length < 2;
-  $("signOutTop").hidden = ok.includes("me");
+  $("signOutTop").hidden = false;
   renderHello();
   document.querySelectorAll(".org-only").forEach(el => el.hidden = !org);
   renderMatchday(); renderTeams(); renderSeason(); renderAwards(); renderClub(); renderMe(); if (org) { renderPlayers(); renderJoinRequests(); renderQR(); }
@@ -1111,7 +1136,10 @@ function renderMatchday() {
     $("mdGame").innerHTML = '<div class="card"><p class="empty">No game has been set up yet.' + (S.me.organiser ? " Set up the next game below." : " Check back soon.") + '</p></div>';
   } else {
     const n = md.players.length, cap = g.capacity, my = md.myStatus;
-    const pill = my === "in" ? '<span class="status-pill status-in">You\'re playing</span>' : my === "wait" ? '<span class="status-pill status-wait">You\'re on the waiting list</span>' : "";
+    const pill = my === "in" ? '<span class="status-pill status-in">You\'re playing</span>' : my === "wait" ? '<span class="status-pill status-wait">You\'re on the waiting list</span>'
+      : my === "maybe" ? '<span class="status-pill status-wait">You said maybe</span>' : my === "no" ? '<span class="status-pill">You can\'t make it</span>' : "";
+    const yes = my === "in" || my === "wait", maybeN = (md.maybe || []).length, noN = (md.no || []).length;
+    const opt = (ans, label, on, count) => '<button type="button" class="poll-btn' + (on ? " on" : "") + '" data-act="poll" data-answer="' + ans + '" aria-pressed="' + on + '"><b>' + label + '</b><span>' + count + '</span></button>';
     $("mdGame").innerHTML =
       '<div class="card game-card">' +
         '<div class="row" style="justify-content:space-between"><p class="game-when">' + esc(fmtDate(g.date, { weekday: "long", day: "numeric", month: "long" })) + '</p>' + pill + '</div>' +
@@ -1122,16 +1150,37 @@ function renderMatchday() {
         '</div>' +
         '<div class="spots"><div class="spots-text"><span>' + n + ' of ' + cap + ' spots taken</span><span>' + Math.max(0, cap - n) + ' left</span></div>' +
           '<div class="spots-bar"><i style="width:' + Math.min(100, n / cap * 100) + '%"></i></div></div>' +
-        (my ? '<button class="btn btn-ghost" type="button" data-act="leave">' + (my === "in" ? "I can't make it" : "Leave the waiting list") + '</button>'
-            : '<button class="btn btn-gold" type="button" data-act="join">' + (n < cap ? "I'm in" : "Join the waiting list") + '</button>') +
+        '<p class="poll-q">Are you playing?' + (n >= cap && !yes ? ' <span class="muted">Spots are full: Yes puts you on the waiting list.</span>' : "") + '</p>' +
+        '<div class="poll-opts">' + opt("yes", "Yes", yes, n + md.waiting.length) + opt("maybe", "Maybe", my === "maybe", maybeN) + opt("no", "No", my === "no", noN) + '</div>' +
+        '<p class="muted-note">You can change your answer any time before the game.</p>' +
       '</div>';
   }
   $("mdCount").textContent = g ? md.players.length + " / " + g.capacity : "";
   $("mdWaitCount").textContent = md.waiting.length ? String(md.waiting.length) : "";
   $("mdPlayers").innerHTML = playerList(md.players, "Nobody has signed up yet.");
   $("mdWaiting").innerHTML = playerList(md.waiting, "Nobody is waiting.");
+  $("mdMaybeCount").textContent = (md.maybe || []).length ? String(md.maybe.length) : "";
+  $("mdNoCount").textContent = (md.no || []).length ? String(md.no.length) : "";
+  $("mdMaybe").innerHTML = nameChips(md.maybe || [], "No maybes.");
+  $("mdNo").innerHTML = nameChips(md.no || [], "Nobody yet.");
+  renderAddList();
   if (g && !gameFormDirty) { $("gDate").value = g.date; $("gTime").value = g.time; $("gVenue").value = g.venue; $("gFee").value = g.fee; $("gCap").value = g.capacity; }
 }
+function nameChips(list, empty) {
+  return list.length ? '<p class="chips">' + list.map(p => '<span class="chip' + (p.mine ? " me" : "") + '">' + esc(p.name) + '</span>').join("") + '</p>' : '<p class="empty">' + empty + '</p>';
+}
+// Organisers: members not yet a Yes, with an Add button
+function renderAddList() {
+  if (!S.me.organiser || !S.register.all || !S.club.game) { $("addList").innerHTML = S.club.game ? "" : '<p class="empty">Set up the next game first.</p>'; return; }
+  const yes = new Set(S.matchday.players.concat(S.matchday.waiting).map(p => p.mid).filter(Boolean));
+  const q = clean($("addSearch").value).toLowerCase();
+  const list = S.register.all.filter(p => !yes.has(p.id) && (!q || (p.member + " " + p.nickname).toLowerCase().includes(q)));
+  $("addList").innerHTML = list.length ? list.slice(0, q ? 40 : 12).map(p => '<div class="add-row"><span>' + esc(p.nickname || p.member) + (p.nickname ? ' <small class="muted">' + esc(p.member) + '</small>' : "") + '</span>' +
+    '<button type="button" class="btn btn-gold btn-xs" data-act="addMember" data-id="' + esc(p.id) + '" data-name="' + esc(p.nickname || p.member) + '">Add</button></div>').join("") +
+    (!q && list.length > 12 ? '<p class="muted-note">Search to find the other ' + (list.length - 12) + ' members.</p>' : "")
+    : '<p class="empty">' + (q ? "No member matches." : "Everyone is already on the list.") + '</p>';
+}
+$("addSearch").addEventListener("input", renderAddList);
 function playerList(list, empty) {
   if (!list.length) return '<p class="empty">' + empty + '</p>';
   const org = S.me.organiser;
@@ -1188,7 +1237,7 @@ function renderSeason() {
   renderMotm();
   if (!resultFormDirty) {
     $("rDate").value = (S.club.game && S.club.game.date) || "";
-    if (!$("scorerRows").children.length) for (let i = 0; i < 3; i++) addScorerRow();
+    buildStatRows();
   }
   const dl = $("playerNames") || Object.assign(document.body.appendChild(document.createElement("datalist")), { id: "playerNames" });
   const names = new Set(); S.teams.list.forEach(t => t.players.forEach(p => names.add(p.name))); S.matchday.players.forEach(p => names.add(p.name));
@@ -1214,9 +1263,27 @@ function renderMotm() {
 }
 
 let resultFormDirty = false;
+// Organisers: one row per member from the Sheet, with goals and assists boxes
+function buildStatRows() {
+  if (!S.me.organiser || !S.register.all) return;
+  const names = [...new Set(S.register.all.map(p => p.member))].sort((a, b) => a.localeCompare(b, "en", { sensitivity: "base" }));
+  $("statRows").innerHTML = names.map((n, i) => '<div class="stat-row" data-name="' + esc(n.toLowerCase()) + '"><span class="nm">' + esc(n) + '</span>' +
+    '<input class="input" type="number" min="0" max="20" inputmode="numeric" value="0" data-name="' + esc(n) + '" data-k="goals" aria-label="Goals for ' + esc(n) + '">' +
+    '<input class="input" type="number" min="0" max="20" inputmode="numeric" value="0" data-name="' + esc(n) + '" data-k="assists" aria-label="Assists for ' + esc(n) + '"></div>').join("");
+  filterStats();
+}
+function filterStats() {
+  const q = clean($("statSearch").value).toLowerCase();
+  document.querySelectorAll("#statRows .stat-row").forEach(r => {
+    const has = [...r.querySelectorAll("input")].some(i => Number(i.value) > 0);
+    r.hidden = !!q && !r.dataset.name.includes(q) && !has; r.classList.toggle("has", has);
+  });
+}
+$("statSearch").addEventListener("input", filterStats);
+$("statRows").addEventListener("input", filterStats);
 function addScorerRow() {
   const r = document.createElement("div"); r.className = "scorer-row";
-  r.innerHTML = '<input class="input" list="playerNames" placeholder="Name" aria-label="Player"><input class="input" type="number" min="0" value="0" aria-label="Goals"><input class="input" type="number" min="0" value="0" aria-label="Assists"><button type="button" class="icon-btn" aria-label="Remove row">' + ICON_X + '</button>';
+  r.innerHTML = '<input class="input" placeholder="Guest\'s name" aria-label="Guest"><input class="input" type="number" min="0" value="0" aria-label="Goals"><input class="input" type="number" min="0" value="0" aria-label="Assists"><button type="button" class="icon-btn" aria-label="Remove row">' + ICON_X + '</button>';
   r.querySelector("button").onclick = () => r.remove();
   $("scorerRows").appendChild(r);
 }
@@ -1224,9 +1291,12 @@ $("addScorer").addEventListener("click", addScorerRow);
 $("resultForm").addEventListener("input", () => resultFormDirty = true);
 $("resultForm").addEventListener("submit", async e => {
   e.preventDefault();
-  const scorers = [...$("scorerRows").children].map(r => { const i = r.querySelectorAll("input"); return { name: i[0].value, goals: i[1].value, assists: i[2].value }; }).filter(s => clean(s.name));
+  const byName = {};
+  document.querySelectorAll("#statRows input").forEach(i => { const n = i.dataset.name; byName[n] = byName[n] || { name: n, goals: 0, assists: 0 }; byName[n][i.dataset.k] = Number(i.value) || 0; });
+  const scorers = Object.values(byName).filter(x => x.goals > 0 || x.assists > 0)
+    .concat([...$("scorerRows").children].map(r => { const i = r.querySelectorAll("input"); return { name: i[0].value, goals: i[1].value, assists: i[2].value }; }).filter(s => clean(s.name)));
   const ok = await act("recordResult", { result: { game: $("rDate").value, orange: $("rOrange").value, blue: $("rBlue").value, scorers } }, "Result saved. Man of the Match voting is open.", e.submitter);
-  if (ok) { resultFormDirty = false; $("scorerRows").innerHTML = ""; $("rOrange").value = 0; $("rBlue").value = 0; renderSeason(); }
+  if (ok) { resultFormDirty = false; $("scorerRows").innerHTML = ""; $("statSearch").value = ""; $("rOrange").value = 0; $("rBlue").value = 0; buildStatRows(); renderSeason(); }
 });
 
 /* ---------- club ---------- */
@@ -1256,8 +1326,8 @@ const ME = { meNick: "nickname", mePos: "position", meFull: "fullName", meDob: "
 Object.keys(ME).forEach(id => $(id).addEventListener("input", () => meDirty = true));
 $("meDob").addEventListener("input", e => {
   if (e.inputType && e.inputType.startsWith("delete")) return;
-  const d = e.target.value.replace(/\D/g, "").slice(0, 8);
-  e.target.value = d.length > 4 ? d.slice(0, 2) + "/" + d.slice(2, 4) + "/" + d.slice(4) : d.length > 2 ? d.slice(0, 2) + "/" + d.slice(2) : d;
+  const d = e.target.value.replace(/\D/g, "").slice(0, 4);
+  e.target.value = d.length > 2 ? d.slice(0, 2) + "/" + d.slice(2) : d;
 });
 function renderMe() {
   if (meDirty) return;
@@ -1275,12 +1345,13 @@ $("meForm").addEventListener("submit", async e => {
 function renderPlayers() {
   const all = S.register.all || [], q = clean($("regSearch").value).toLowerCase();
   const done = all.filter(p => p.done).length;
-  $("regSummary").textContent = done + " of " + all.length + " members have filled in their details. Keep this private: it holds dates of birth and emergency contacts.";
+  $("regSummary").textContent = done + " of " + all.length + " members have filled in their details. Keep this private: it holds birthdays and emergency contacts.";
   const rows = all.filter(p => !q || (p.member + " " + p.nickname + " " + p.fullName).toLowerCase().includes(q));
   const cell = v => v ? "<td>" + esc(v) + "</td>" : '<td class="missing">—</td>';
   $("regBody").innerHTML = rows.map(p => "<tr><td><b>" + esc(p.member) + "</b>" + (p.organiser ? ' <span class="tag tag-paid">Organiser</span>' : "") + (p.fullName ? "<br><span class=\"muted\">" + esc(p.fullName) + "</span>" : "") + "</td>" +
-    cell(p.nickname) + cell(p.position) + cell(p.dob) + cell([p.contactName, p.contactRelation && "(" + p.contactRelation + ")", p.contactPhone].filter(Boolean).join(" ")) + "</tr>").join("") ||
-    '<tr><td colspan="5" class="missing">No players match.</td></tr>';
+    cell(p.nickname) + cell(p.position) + cell(p.dob) + cell([p.contactName, p.contactRelation && "(" + p.contactRelation + ")", p.contactPhone].filter(Boolean).join(" ")) +
+    '<td class="pin-cell">' + (p.pin ? '<span class="tag tag-paid">Set</span> <button class="btn btn-ghost btn-xs" type="button" data-act="resetPin" data-id="' + esc(p.id) + '" data-name="' + esc(p.member) + '">Reset</button>' : '<span class="muted">Not yet</span>') + "</td></tr>").join("") ||
+    '<tr><td colspan="6" class="missing">No players match.</td></tr>';
 }
 $("regSearch").addEventListener("input", renderPlayers);
 
@@ -1289,12 +1360,19 @@ document.addEventListener("click", async e => {
   const b = e.target.closest("[data-act]"); if (!b) return;
   const a = b.dataset.act;
   if (a === "join") act("join", null, "You're in! See you on the pitch.", b);
+  else if (a === "poll") act("poll", { answer: b.dataset.answer }, { yes: "You're in! See you on the pitch.", maybe: "Marked as maybe.", no: "Thanks for letting us know." }[b.dataset.answer], b);
+  else if (a === "addMember") act("addMember", { id: b.dataset.id }, b.dataset.name + " added as a Yes.", b);
   else if (a === "leave") act("leave", null, "You've been taken off the list.", b);
   else if (a === "setPaid") act("setPaid", { id: b.dataset.id, paid: !!b.dataset.paid }, null, b);
   else if (a === "removeSignup") { if (b.dataset.confirm) act("removeSignup", { id: b.dataset.id }, "Player removed.", b); else { b.dataset.confirm = "1"; b.style.borderColor = "var(--bad)"; b.style.color = "var(--bad)"; toast("Tap again to remove this player."); setTimeout(() => { delete b.dataset.confirm; b.style.cssText = ""; }, 3000); } }
   else if (a === "pickTeams") act("pickTeams", null, "Teams picked.", b);
   else if (a === "clearTeams") act("clearTeams", null, "Teams cleared.", b);
   else if (a === "removeFixture") act("removeFixture", { id: b.dataset.id }, "Fixture removed.", b);
+  else if (a === "resetPin") {
+    if (b.dataset.confirm) act("resetPin", { id: b.dataset.id }, b.dataset.name + "'s PIN is reset. They'll choose a new one next time they sign in.", b);
+    else { b.dataset.confirm = "1"; b.textContent = "Tap again to reset"; b.style.borderColor = "var(--bad)"; b.style.color = "var(--bad)";
+      setTimeout(() => { if (b.isConnected) { delete b.dataset.confirm; b.textContent = "Reset"; b.style.cssText = ""; } }, 4000); }
+  }
   else if (a === "motmVote") {
     const r = document.querySelector('input[name="motm"]:checked'), f = $("motmFree");
     const pick = r ? r.value : f ? f.value : "";
@@ -1760,84 +1838,6 @@ $("qrDownload").addEventListener("click", async () => {
     const a = document.createElement("a"); a.href = cv.toDataURL("image/png"); a.download = "afrobeats-fc-join-qr.png"; document.body.appendChild(a); a.click(); a.remove();
   } catch (e) { toast("Couldn't make the QR image. Try again.", true); }
 });
-
-/* ================= FOOTBALL ================= */
-const COMP_NAMES = { PL: "Premier League", CL: "Champions League", PD: "La Liga", SA: "Serie A", BL1: "Bundesliga", FL1: "Ligue 1", ELC: "Championship", DED: "Eredivisie", PPL: "Primeira Liga", BSA: "Brasileirão", EC: "Euros", WC: "World Cup" };
-const COMP_ORDER = ["PL", "CL", "PD", "SA", "BL1", "FL1", "ELC", "DED", "PPL", "BSA", "EC", "WC"];
-let fbDay = 0, fbComp = "ALL", fbData = {}, fbTimer = null;
-function isoDay(offset) { const d = new Date(); d.setDate(d.getDate() + offset); return d.getFullYear() + "-" + String(d.getMonth() + 1).padStart(2, "0") + "-" + String(d.getDate()).padStart(2, "0"); }
-function renderFbDays() {
-  const label = o => o === 0 ? "Today" : o === -1 ? "Yesterday" : o === 1 ? "Tomorrow" : fmtDate(isoDay(o), { weekday: "short", day: "numeric" });
-  $("fbDays").innerHTML = [-1, 0, 1, 2, 3, 4, 5].map(o => '<button type="button" role="tab" aria-selected="' + (o === fbDay) + '" class="' + (o === fbDay ? "on" : "") + '" data-day="' + o + '">' + esc(label(o)) + '</button>').join("");
-}
-$("fbDays").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; fbDay = Number(b.dataset.day); fbComp = "ALL"; loadFootball(); });
-$("fbComps").addEventListener("click", e => { const b = e.target.closest("button"); if (!b) return; fbComp = b.dataset.comp; renderFootball(); });
-async function loadFootball() {
-  renderFbDays();
-  clearTimeout(fbTimer);
-  const day = isoDay(fbDay);
-  if (!fbData[day]) $("fbBox").innerHTML = '<p class="loading">Loading scores…</p>';
-  else renderFootball();
-  try {
-    const out = await api("football", { from: day, to: day });
-    fbData[day] = out;
-    renderFootball();
-    if (!$("fbTable").dataset.loaded && out.configured && !out.error) loadTable($("fbTablePick").value);
-  } catch (e) { $("fbBox").innerHTML = '<div class="card"><p class="empty">' + esc(e.message) + '</p></div>'; }
-  if (tab === "football" && fbDay === 0) fbTimer = setTimeout(() => { if (tab === "football" && !document.hidden) loadFootball(); }, 90000);
-}
-function statusCell(m) {
-  const t = new Date(m.utc), time = t.toLocaleTimeString("en-GB", { hour: "2-digit", minute: "2-digit" });
-  if (m.status === "IN_PLAY") return '<span class="fb-live">' + (m.minute ? esc(m.minute) + "'" : "LIVE") + '</span>';
-  if (m.status === "PAUSED") return '<span class="fb-live">HT</span>';
-  if (m.status === "FINISHED" || m.status === "AWARDED") return '<span class="fb-ft">FT</span>';
-  if (m.status === "POSTPONED") return '<span class="fb-ft">PP</span>';
-  if (m.status === "CANCELLED" || m.status === "SUSPENDED") return '<span class="fb-ft">' + esc(m.status.slice(0, 4)) + '</span>';
-  return '<span class="fb-time">' + time + '</span>';
-}
-function crest(url) { return url ? '<img class="fb-crest" src="' + esc(url) + '" alt="" loading="lazy" width="22" height="22">' : '<span class="fb-crest blank"></span>'; }
-function renderFootball() {
-  const out = fbData[isoDay(fbDay)];
-  if (!out) return;
-  if (!out.configured) {
-    $("fbComps").innerHTML = "";
-    $("fbBox").innerHTML = '<div class="card"><p class="empty">' + (S.me.organiser
-      ? 'Football scores need a free key. Register at football-data.org, copy the key from your email, and paste it into the <b>Football data key</b> row of the Settings tab in the Google Sheet.'
-      : "Football scores are coming soon.") + '</p></div>';
-    return;
-  }
-  if (out.error) { $("fbBox").innerHTML = '<div class="card"><p class="empty">' + esc(out.error) + '</p></div>'; return; }
-  const ms = (out.matches || []).slice().sort((a, b) => COMP_ORDER.indexOf(a.comp) - COMP_ORDER.indexOf(b.comp) || a.utc.localeCompare(b.utc));
-  const comps = COMP_ORDER.filter(c => ms.some(m => m.comp === c));
-  const liveN = ms.filter(m => m.status === "IN_PLAY" || m.status === "PAUSED").length;
-  $("fbComps").innerHTML = comps.length > 1 ? ['ALL'].concat(comps).map(c => '<button type="button" class="' + (c === fbComp ? "on" : "") + '" data-comp="' + c + '">' + (c === "ALL" ? "All" + (liveN ? ' <span class="fb-dot"></span>' : "") : esc(COMP_NAMES[c] || c)) + '</button>').join("") : "";
-  const shown = ms.filter(m => fbComp === "ALL" || m.comp === fbComp);
-  if (!shown.length) { $("fbBox").innerHTML = '<div class="card"><p class="empty">No matches in these leagues ' + (fbDay === 0 ? "today" : "on this day") + '.</p></div>'; return; }
-  const groups = {}; shown.forEach(m => (groups[m.comp] = groups[m.comp] || []).push(m));
-  $("fbBox").innerHTML = (out.stale ? '<p class="muted-note">Showing the last scores we had. Live updates are busy.</p>' : "") + Object.keys(groups).map(c =>
-    '<div class="card fb-comp"><h2>' + (groups[c][0].compEmblem ? '<img class="fb-emblem" src="' + esc(groups[c][0].compEmblem) + '" alt="" width="22" height="22">' : "") + esc(COMP_NAMES[c] || groups[c][0].compName) + '</h2><div class="fb-list">' +
-    groups[c].map(m => {
-      const live = m.status === "IN_PLAY" || m.status === "PAUSED", done = m.hs !== null && m.hs !== undefined;
-      const hw = done && m.hs > m.as, aw = done && m.as > m.hs;
-      return '<div class="fb-row' + (live ? " is-live" : "") + '"><div class="fb-st">' + statusCell(m) + '</div>' +
-        '<div class="fb-team home' + (hw ? " win" : "") + '"><span>' + esc(m.home) + '</span>' + crest(m.homeCrest) + '</div>' +
-        '<div class="fb-score">' + (done ? m.hs + '<i>–</i>' + m.as : '<i>v</i>') + '</div>' +
-        '<div class="fb-team away' + (aw ? " win" : "") + '">' + crest(m.awayCrest) + '<span>' + esc(m.away) + '</span></div></div>';
-    }).join("") + '</div></div>').join("");
-}
-async function loadTable(code) {
-  $("fbTable").innerHTML = '<p class="loading">Loading table…</p>';
-  try {
-    const out = await api("football", { kind: "table", code });
-    if (!out.configured) { $("fbTable").innerHTML = '<p class="empty">Football data isn\'t set up yet.</p>'; return; }
-    if (out.error) { $("fbTable").innerHTML = '<p class="empty">' + esc(out.error) + '</p>'; return; }
-    $("fbTable").dataset.loaded = "1";
-    const t = out.table.table;
-    $("fbTable").innerHTML = '<div class="table-wrap"><table class="reg fb-tbl"><thead><tr><th>#</th><th>Team</th><th>P</th><th>W</th><th>D</th><th>L</th><th>GD</th><th>Pts</th></tr></thead><tbody>' +
-      t.map(r => '<tr><td>' + r.pos + '</td><td class="fb-tteam">' + crest(r.crest) + esc(r.team) + '</td><td>' + r.played + '</td><td>' + r.won + '</td><td>' + r.draw + '</td><td>' + r.lost + '</td><td>' + (r.gd > 0 ? "+" : "") + r.gd + '</td><td><b>' + r.pts + '</b></td></tr>').join("") + '</tbody></table></div>';
-  } catch (e) { $("fbTable").innerHTML = '<p class="empty">' + esc(e.message) + '</p>'; }
-}
-$("fbTablePick").addEventListener("change", e => loadTable(e.target.value));
 
 /* ---------- keep the page fresh ---------- */
 setInterval(() => {

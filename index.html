@@ -546,6 +546,20 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
 .turnout-card { margin-bottom: 16px; }
 #awardsBox > .card + .card { margin-top: 14px; }
 
+/* ballot: one pick per award, tap again to un-pick, or type a name */
+.award.picked .choice input:not(:checked) + span,
+.award.typed .choice span { opacity: .42; filter: saturate(.6); }
+.award.picked .choice:hover input:not(:checked) + span,
+.award.typed .choice:hover span { opacity: .75; }
+.undo-hint { display: none; margin-top: 8px; font-size: 12.5px; color: var(--muted); }
+.award.picked .undo-hint { display: block; }
+.write-in { margin-top: 12px; display: flex; flex-wrap: wrap; gap: 8px; align-items: center; }
+.write-in label { flex: 1 1 100%; font-size: 13px; font-weight: 600; color: var(--muted); }
+.write-in .input { flex: 1 1 auto; min-width: 0; }
+.award.typed .write-in .input { border-color: var(--gold); box-shadow: 0 0 0 3px rgba(242,193,78,.15); }
+.write-clear { flex: none; background: none; border: 1px solid rgba(255,255,255,.18); color: var(--muted); border-radius: 10px; padding: 10px 14px; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
+.write-clear:hover { color: #fff; border-color: rgba(255,255,255,.4); }
+
 </style>
 </head>
 <body>
@@ -1243,7 +1257,7 @@ function voteClock(a) {
 }
 function renderAwards() {
   const a = S.awards, org = S.me.organiser;
-  $("awardsSub").textContent = a.published ? "The results are in." : a.voted ? "" : a.open ? "Pick one for each award. Not on the list? Choose Someone else and type the name. You can't vote for yourself." : "";
+  $("awardsSub").textContent = a.published ? "The results are in." : a.voted ? "" : (a.open || (org && a.phase === "before")) ? "Pick one for each award, or type a name if they're not listed. You can't vote for yourself." : "";
   $("ballotWrap").hidden = true; $("winnersGrid").innerHTML = ""; $("awardsBox").innerHTML = "";
   if (a.published) { renderWinners($("winnersGrid"), { ballots: a.ballots, awards: a.winners }); return; }
   let html = "";
@@ -1259,6 +1273,9 @@ function renderAwards() {
     // results card already says it all
   } else if (a.voted) {
     html += '<div class="card notice-card"><h2>' + ICON.trophy.replace("<svg", '<svg width="18" height="18"') + ' Vote counted</h2><p>Thanks, ' + esc(S.me.display.split(" ")[0]) + '. Your ballot is in. ' + REVEAL + '</p></div>';
+  } else if (a.phase === "before" && org) {
+    html += '<div class="card private-card"><h2>Organiser test mode</h2><p>Members can\'t see the ballot until ' + (a.opensAt ? esc(fmtWhen(a.opensAt)) : "voting opens") +
+      '. You can try it now: pick, un-pick, type names, review and submit. <b>Nothing is saved</b>, so you can still vote for real once voting opens.</p></div>';
   } else if (a.phase === "before") {
     html += '<div class="card notice-card"><h2>' + ICON.trophy.replace("<svg", '<svg width="18" height="18"') + ' Voting opens soon</h2><p>The ballot opens ' + (a.opensAt ? esc(fmtWhen(a.opensAt)) : "soon") + ' and closes ' + (a.closesAt ? esc(fmtWhen(a.closesAt)) : "later") + '. Come back then to vote: one pick for each award.</p></div>';
   } else if (!a.open && !(org && a.private)) {
@@ -1266,7 +1283,8 @@ function renderAwards() {
   }
   $("awardsBox").innerHTML = html;
   if (org && a.private) { renderWinners($("winnersGrid"), a.private); return; }
-  if (a.voted || !a.open) return;
+  const testMode = org && a.phase === "before" && !a.voted;
+  if (!testMode && (a.voted || !a.open)) return;
   if (!ballotBuilt) { buildBallot(); ballotBuilt = true; }
   $("ballotWrap").hidden = false;
   refreshBallot();
@@ -1314,16 +1332,23 @@ function buildBallot() {
       const box = document.createElement("div");
       box.className = "choices" + (long ? " long" : ""); box.id = "f-" + item.id;
       opts.forEach((opt, k) => box.appendChild(choice(item.id, opt, opt, k)));
-      if (!item.noOther) box.appendChild(choice(item.id, OTHER, "Someone else", "other", true));
+
       card.appendChild(box);
+      const uh = document.createElement("p"); uh.className = "undo-hint";
+      uh.textContent = "Changed your mind? Tap your pick again to undo it" + (item.noOther ? "." : ", or type a different name below.");
+      card.appendChild(uh);
       const nm = document.createElement("p"); nm.className = "no-match"; nm.id = "nm-" + item.id; nm.hidden = true;
-      nm.textContent = "No nominee matches. Choose Someone else to add them."; card.appendChild(nm);
+      nm.textContent = "No nominee matches. Type the name in the box below."; card.appendChild(nm);
       if (!item.noOther) {
+        const wrap = document.createElement("div"); wrap.className = "write-in";
+        wrap.innerHTML = '<label for="o-' + item.id + '">Not on the list? Type a name instead</label>';
         const inp = document.createElement("input");
-        inp.className = "input"; inp.type = "text"; inp.id = "o-" + item.id; inp.hidden = true;
-        inp.setAttribute("list", "awardNames"); inp.autocomplete = "off"; inp.placeholder = "Type the player's name";
-        inp.setAttribute("aria-label", item.label + ": someone else");
-        card.appendChild(inp);
+        inp.className = "input"; inp.type = "text"; inp.id = "o-" + item.id; inp.dataset.group = item.id;
+        inp.setAttribute("list", "awardNames"); inp.autocomplete = "off"; inp.placeholder = "Player's name";
+        const clr = document.createElement("button"); clr.type = "button"; clr.className = "write-clear"; clr.textContent = "Clear";
+        clr.hidden = true; clr.setAttribute("aria-label", "Clear the typed name for " + item.label);
+        clr.addEventListener("click", () => { inp.value = ""; clr.hidden = true; refreshBallot(); saveDraft(); inp.focus(); });
+        wrap.append(inp, clr); card.appendChild(wrap);
       }
       sec.appendChild(card);
     });
@@ -1345,8 +1370,8 @@ function filter(id) {
   const q = clean($("s-" + id).value).toLowerCase(); let shown = 0;
   document.querySelectorAll("#f-" + id + " .choice").forEach(l => {
     const r = l.querySelector("input");
-    const keep = r.value === OTHER || r.checked || !q || r.value.toLowerCase().includes(q);
-    l.hidden = !keep; if (keep && r.value !== OTHER) shown++;
+    const keep = r.checked || !q || r.value.toLowerCase().includes(q);
+    l.hidden = !keep; if (keep) shown++;
   });
   $("nm-" + id).hidden = !(q && shown === 0);
 }
@@ -1354,8 +1379,11 @@ function values() {
   const v = {};
   ITEMS.forEach(i => {
     const r = document.querySelector('input[name="' + i.id + '"]:checked'), o = $("o-" + i.id);
-    if (o) o.hidden = !(r && r.value === OTHER);
-    v[i.id] = !r ? "" : r.value === OTHER ? clean(o.value) : r.value;
+    const typed = o ? clean(o.value) : "";
+    v[i.id] = r ? r.value : typed;
+    const card = $("card-" + i.id);
+    if (card) { card.classList.toggle("picked", !!r); card.classList.toggle("typed", !r && !!typed); }
+    if (o && o.nextSibling) o.nextSibling.hidden = !o.value;
   });
   return v;
 }
@@ -1389,11 +1417,30 @@ function nextAfter(id) {
   return ITEMS.slice(idx + 1).concat(ITEMS.slice(0, idx)).find(i => !v[i.id]);
 }
 let advanceTimer = null;
-$("form").addEventListener("input", () => { refreshBallot(); saveDraft(); $("msg").textContent = ""; });
-$("form").addEventListener("change", e => {
+$("form").addEventListener("input", e => {
+  const t = e.target;
+  // Typing a name clears any nominee picked in that award
+  if (t.dataset && t.dataset.group && clean(t.value)) document.querySelectorAll('input[name="' + t.dataset.group + '"]').forEach(r => r.checked = false);
+  refreshBallot(); saveDraft(); $("msg").textContent = "";
+});
+// Tap a picked nominee again to un-pick it
+$("form").addEventListener("pointerdown", e => {
+  const l = e.target.closest && e.target.closest(".choice"); if (!l) return;
+  const r = l.querySelector("input"); r.dataset.was = r.checked ? "1" : "";
+});
+$("form").addEventListener("click", e => {
   const t = e.target; if (t.type !== "radio") return;
+  if (t.dataset.was === "1") {
+    t.dataset.was = ""; t.checked = false; clearTimeout(advanceTimer);
+    refreshBallot(); saveDraft(); return;
+  }
+  t.dataset.was = "";
+});
+$("form").addEventListener("change", e => {
+  const t = e.target; if (t.type !== "radio" || !t.checked) return;
+  // Picking a nominee clears any typed name in that award
+  const o = $("o-" + t.name); if (o && o.value) { o.value = ""; refreshBallot(); saveDraft(); }
   clearTimeout(advanceTimer);
-  if (t.value === OTHER) { const o = $("o-" + t.name); if (o) o.focus(); return; }
   const nxt = nextAfter(t.name);
   advanceTimer = setTimeout(() => { if (nxt) goToAward(nxt.id); }, 380);
 });
@@ -1406,7 +1453,7 @@ $("dockReview").onclick = () => {
   missing.forEach(i => $("card-" + i.id).classList.add("invalid"));
   if (missing.length) {
     const m = missing[0], o = $("o-" + m.id), typing = o && !o.hidden;
-    $("msg").textContent = missing.length > 1 ? missing.length + " awards still need a pick." : typing ? "Type a name for " + m.label + "." : "Pick your " + m.label + ".";
+    $("msg").textContent = missing.length > 1 ? missing.length + " awards still need a pick." : "Pick or type a name for " + m.label + ".";
     goToAward(m.id); return;
   }
   $("reviewList").innerHTML = "";
@@ -1422,7 +1469,14 @@ $("dockReview").onclick = () => {
 $("backBtn").onclick = () => $("review").hidden = true;
 $("submitBtn").onclick = async () => {
   const b = $("submitBtn"); b.disabled = true; b.textContent = "Sending…";
-  try { await api("awardsVote", { picks: values() }); store.del(draftKey()); $("review").hidden = true; toast("Vote counted. Thank you!"); window.scrollTo(0, 0); }
+  try {
+    if (S.me.organiser && S.awards.phase === "before") {
+      // Organiser test run before voting opens: check everything, save nothing
+      store.del(draftKey()); $("review").hidden = true; resetBallot(); renderAwards(); window.scrollTo(0, 0);
+      toast("Test ballot worked. Nothing was saved."); return;
+    }
+    await api("awardsVote", { picks: values() }); store.del(draftKey()); $("review").hidden = true; toast("Vote counted. Thank you!"); window.scrollTo(0, 0);
+  }
   catch (e) { $("reviewMsg").textContent = e.message; }
   finally { b.disabled = false; b.textContent = "Submit my vote"; }
 };

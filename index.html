@@ -560,6 +560,22 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
 .write-clear { flex: none; background: none; border: 1px solid rgba(255,255,255,.18); color: var(--muted); border-radius: 10px; padding: 10px 14px; font: inherit; font-weight: 700; font-size: 13px; cursor: pointer; }
 .write-clear:hover { color: #fff; border-color: rgba(255,255,255,.4); }
 
+/* no-self-vote: make it impossible to miss */
+.self-rule { display: flex; gap: 12px; align-items: flex-start; margin: 14px 0 4px; padding: 14px 16px; border-radius: 14px;
+  background: rgba(217,75,63,.14); border: 2px solid rgba(255,120,105,.75); color: #ffe3df; font-size: 15px; line-height: 1.45; }
+.self-rule span { font-size: 22px; line-height: 1; }
+.self-rule b { color: #fff; }
+.self-warn { margin-top: 10px; padding: 12px 14px; border-radius: 12px; background: #b3261e; color: #fff; font-size: 14.5px; line-height: 1.45; font-weight: 600;
+  box-shadow: 0 8px 24px -10px rgba(179,38,30,.9); animation: selfshake .35s var(--ease, ease) 1; }
+.self-warn b { font-weight: 800; }
+.award.self { border-color: #ff6b5e !important; box-shadow: 0 0 0 3px rgba(255,107,94,.25); }
+.award.self .write-in .input { border-color: #ff6b5e; box-shadow: 0 0 0 3px rgba(255,107,94,.25); }
+@keyframes selfshake { 0%,100% { transform: none; } 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+@media (prefers-reduced-motion: reduce) { .self-warn { animation: none; } }
+.ballot-submit .msg:empty { display: none; }
+.ballot-submit .msg:not(:empty) { background: #b3261e; color: #fff; padding: 11px 14px; border-radius: 12px; font-weight: 800; font-size: 14.5px; text-align: center;
+  line-height: 1.4; box-shadow: 0 12px 30px -12px rgba(0,0,0,.9); }
+
 </style>
 </head>
 <body>
@@ -1281,6 +1297,8 @@ function renderAwards() {
   } else if (!a.open && !(org && a.private)) {
     html += '<div class="card"><p class="empty">Voting has closed. ' + REVEAL + '</p></div>';
   }
+  if (!a.voted && (a.open || (org && a.phase === "before")))
+    html += '<div class="self-rule" role="note"><span aria-hidden="true">🚫</span><div><b>No voting for yourself.</b> Your own name is hidden from the lists, and typing your own name won\'t be accepted.</div></div>';
   $("awardsBox").innerHTML = html;
   if (org && a.private) { renderWinners($("winnersGrid"), a.private); return; }
   const testMode = org && a.phase === "before" && !a.voted;
@@ -1349,6 +1367,8 @@ function buildBallot() {
         clr.hidden = true; clr.setAttribute("aria-label", "Clear the typed name for " + item.label);
         clr.addEventListener("click", () => { inp.value = ""; clr.hidden = true; refreshBallot(); saveDraft(); inp.focus(); });
         wrap.append(inp, clr); card.appendChild(wrap);
+        const sw = document.createElement("div"); sw.className = "self-warn"; sw.id = "sw-" + item.id; sw.hidden = true; sw.setAttribute("role", "alert");
+        card.appendChild(sw);
       }
       sec.appendChild(card);
     });
@@ -1384,13 +1404,19 @@ function values() {
     const card = $("card-" + i.id);
     if (card) { card.classList.toggle("picked", !!r); card.classList.toggle("typed", !r && !!typed); }
     if (o && o.nextSibling) o.nextSibling.hidden = !o.value;
+    const sw = $("sw-" + i.id), me = !r && typed && isSelf(i.id, typed);
+    if (sw) {
+      sw.hidden = !me;
+      if (me) sw.innerHTML = '<b>That\'s you, ' + esc(S.me.display.split(" ")[0]) + '!</b> You can\'t vote for yourself for ' + esc(i.label) + '. Pick or type someone else.';
+    }
+    if (card) card.classList.toggle("self", !!me);
   });
   return v;
 }
 function refreshBallot() {
   const v = values(); let done = 0;
   ITEMS.forEach(i => {
-    const ok = !!v[i.id]; if (ok) done++;
+    const ok = !!v[i.id] && !isSelf(i.id, v[i.id]); if (ok) done++;
     $("card-" + i.id).classList.toggle("done", ok); if (ok) $("card-" + i.id).classList.remove("invalid");
     $("p-" + i.id).textContent = ok ? v[i.id] : "";
   });
@@ -1448,7 +1474,11 @@ $("form").addEventListener("submit", e => e.preventDefault());
 $("dockReview").onclick = () => {
   const { v } = refreshBallot();
   const selfPick = ITEMS.find(i => v[i.id] && isSelf(i.id, v[i.id]));
-  if (selfPick) { $("card-" + selfPick.id).classList.add("invalid"); $("msg").textContent = "You can't vote for yourself for " + selfPick.label + ". Pick someone else."; goToAward(selfPick.id); return; }
+  if (selfPick) { $("card-" + selfPick.id).classList.add("invalid"); $("msg").textContent = "You can't vote for yourself for " + selfPick.label + ". Pick someone else.";
+    const sw = $("sw-" + selfPick.id);
+    if (sw && !sw.hidden) { sw.scrollIntoView({ behavior: reduceMotion ? "auto" : "smooth", block: "center" }); sw.style.animation = "none"; void sw.offsetWidth; sw.style.animation = ""; }
+    else goToAward(selfPick.id);
+    return; }
   const missing = ITEMS.filter(i => !v[i.id]);
   missing.forEach(i => $("card-" + i.id).classList.add("invalid"));
   if (missing.length) {

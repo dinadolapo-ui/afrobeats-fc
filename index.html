@@ -647,6 +647,17 @@ table.fb-tbl td, table.fb-tbl th { padding: 8px 10px; font-variant-numeric: tabu
 .sponsor-grid:has(.sp-about.long) { grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr)); }
 .people-grid { grid-template-columns: repeat(auto-fill, minmax(min(100%, 340px), 1fr)); align-items: start; }
 .sponsor-grid { align-items: start; }
+.report-card .btn { justify-self: start; }
+.report-card h2 { margin: 0; font-size: 18px; }
+.report-card p { margin: 0; }
+.report-viewer { position: fixed; inset: 0; z-index: 90; background: rgba(4,12,8,.96); display: flex; flex-direction: column; }
+.report-viewer[hidden] { display: none; }
+.rv-bar { display: flex; align-items: center; gap: 10px; padding: 10px 12px; padding-top: max(10px, env(safe-area-inset-top)); border-bottom: 1px solid var(--line); }
+.rv-bar b { flex: 1; font-size: 15px; }
+.rv-scroll { flex: 1; overflow: auto; -webkit-overflow-scrolling: touch; padding: 8px; }
+.rv-page { margin: 0 auto; overflow: hidden; }
+.rv-page iframe { border: 0; display: block; transform-origin: 0 0; background: #fff; }
+body.rv-open { overflow: hidden; }
 
 </style>
 </head>
@@ -1473,7 +1484,7 @@ document.addEventListener("click", async e => {
 
 /* ================= AWARDS ================= */
 let ballotBuilt = false;
-const REVEAL = "Winners will be revealed on awards night, Saturday 5 December.";
+const REVEAL = "Winners will be revealed on awards night, Saturday 5 December, and appear here for everyone from Sunday 6 December.";
 const normName = s => String(s || "").normalize("NFD").replace(/[\u0300-\u036f]/g, "").toLowerCase().replace(/[^a-z0-9]/g, "");
 const isSelf = (id, name) => id !== "omg" && !!S && (S.awards.selfNames || []).includes(normName(name));
 function fmtWhen(ms) {
@@ -1498,13 +1509,13 @@ function renderAwards() {
   const a = S.awards, org = S.me.organiser;
   $("awardsSub").textContent = a.published ? "The results are in." : a.voted ? "" : (a.open || (org && a.phase === "before")) ? "Pick one for each award, or type a name if they're not listed. You can't vote for yourself." : "";
   $("ballotWrap").hidden = true; $("winnersGrid").innerHTML = ""; $("awardsBox").innerHTML = "";
-  if (a.published) { renderWinners($("winnersGrid"), { ballots: a.ballots, awards: a.winners }); return; }
+  if (a.published) { renderWinners($("winnersGrid"), { ballots: a.ballots, awards: a.winners, report: a.report }); return; }
   let html = "";
   const clock = voteClock(a);
   if (clock) html += '<p class="vote-clock' + (a.phase === "open" ? " live" : "") + '" id="voteClock">' + esc(clock) + '</p>';
   if (org && a.private) {
     html += '<div class="card private-card"><h2>Results (organisers only)</h2><p>Members can\'t see these yet. ' + a.private.ballots + ' of ' + (a.turnout ? a.turnout.members : "?") +
-      ' members voted. Use this to order the cups. To reveal the winners on awards night, tick <b>Show winners</b> in the Settings tab.</p></div>';
+      ' members voted. Use this to order the cups. The winners appear for everyone automatically from <b>Sunday 6 December</b> (Settings: <b>Show winners from</b>). To reveal them earlier, tick <b>Show winners</b>.</p></div>';
   } else if (org && a.turnout && a.phase !== "before") {
     html += '<div class="card turnout-card"><p><b>' + a.turnout.ballots + ' of ' + a.turnout.members + ' members have voted.</b> Only organisers see this count. Results stay hidden until voting closes.</p></div>';
   }
@@ -1778,6 +1789,51 @@ function renderWinners(grid, data) {
     if (item.id === "omg") p.append("Moment of the season: ", b); else p.append("Congratulations, ", b, "!");
     card.appendChild(c); grid.appendChild(card);
   });
+  if (data.report && data.report.file) {
+    const box = document.createElement("div"); box.className = "card report-card"; box.style.gridColumn = "1 / -1";
+    box.innerHTML = '<h2>Full results report</h2><p>Every vote count, the podium for each award and the voting stats, in an 8-page report. Open it here, then save it as a PDF or print it.</p><button class="btn btn-gold" type="button">Open the report</button><p class="report-msg muted-note" role="status"></p>';
+    const btn = box.querySelector("button"), msg = box.querySelector(".report-msg");
+    btn.addEventListener("click", async () => {
+      btn.disabled = true; msg.textContent = "Opening the report…";
+      try { await openReport(data.report); msg.textContent = ""; }
+      catch (e) { msg.textContent = "Couldn't open the report. Check your connection and try again."; }
+      btn.disabled = false;
+    });
+    grid.appendChild(box);
+  }
+}
+// The report is stored encrypted (AES-GCM: 12-byte IV, then gzipped HTML). The key only comes from the server once the winners are public.
+async function loadReport(r) {
+  const b64 = s => Uint8Array.from(atob(s.replace(/-/g, "+").replace(/_/g, "/") + "===".slice((s.length + 3) % 4)), c => c.charCodeAt(0));
+  const res = await fetch(r.file, { cache: "no-store" }); if (!res.ok) throw new Error("fetch");
+  const buf = new Uint8Array(await res.arrayBuffer());
+  const key = await crypto.subtle.importKey("raw", b64(r.key), "AES-GCM", false, ["decrypt"]);
+  const zipped = await crypto.subtle.decrypt({ name: "AES-GCM", iv: buf.slice(0, 12) }, key, buf.slice(12));
+  const html = await new Response(new Blob([zipped]).stream().pipeThrough(new DecompressionStream("gzip"))).text();
+  return html.replace("__" + "CREST__", $("crestSrc").href).replace("</style>", "html,body{margin:0;padding:0;background:#fbfaf6}</style>");
+}
+async function openReport(r) {
+  const html = await loadReport(r);
+  let ov = $("reportViewer");
+  if (!ov) {
+    ov = document.createElement("div"); ov.id = "reportViewer"; ov.className = "report-viewer"; ov.setAttribute("role", "dialog"); ov.setAttribute("aria-label", "Awards 2026 report");
+    ov.innerHTML = '<div class="rv-bar"><b>Awards 2026 report</b><button class="btn btn-gold btn-sm rv-print" type="button">Save as PDF / Print</button><button class="btn btn-ghost btn-sm rv-close" type="button">Close</button></div><div class="rv-scroll"><div class="rv-page"><iframe title="Awards 2026 report"></iframe></div></div>';
+    document.body.appendChild(ov);
+    ov.querySelector(".rv-close").addEventListener("click", () => { ov.hidden = true; document.body.classList.remove("rv-open"); });
+    ov.querySelector(".rv-print").addEventListener("click", () => { const f = ov.querySelector("iframe"); f.contentWindow.focus(); f.contentWindow.print(); });
+    addEventListener("resize", () => { if (!ov.hidden) fitReport(ov); });
+  }
+  const f = ov.querySelector("iframe");
+  ov.hidden = false; document.body.classList.add("rv-open");
+  await new Promise(done => { f.onload = done; f.srcdoc = html; });
+  fitReport(ov); setTimeout(() => fitReport(ov), 800);
+}
+function fitReport(ov) {
+  const f = ov.querySelector("iframe"), wrap = ov.querySelector(".rv-page"), W = 794;
+  const s = Math.min(1, (ov.querySelector(".rv-scroll").clientWidth - 16) / W);
+  const h = f.contentDocument ? f.contentDocument.documentElement.scrollHeight : 9000;
+  f.style.width = W + "px"; f.style.height = h + "px"; f.style.transform = "scale(" + s + ")";
+  wrap.style.width = W * s + "px"; wrap.style.height = h * s + "px";
 }
 let celebrated = false;
 function celebrate() { if (celebrated) return; celebrated = true; confetti(); }
